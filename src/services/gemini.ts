@@ -16,6 +16,7 @@ const IMAGE_MODEL = "gemini-3.1-flash-image-preview";
 
 export async function generateStructuredStory(params: {
   tomeNumber: string;
+  tomeTheme?: string;
   title: string;
   universe: string;
   theme: string;
@@ -67,10 +68,11 @@ export async function generateStructuredStory(params: {
 Les personnages récurrents de la série (qui DOIVENT TOUS apparaître et jouer un rôle) sont :
 ${charactersList}
 
-Le personnage invité de ce tome :
+Le personnage invité de cette histoire :
 - ${params.guestName} (Description : ${params.guestStyle})
 
-OBJECTIF : Écris le Tome ${params.tomeNumber} de la série. L'idée de départ ou le thème est "${params.title}". Tu dois GÉNÉRER UN TITRE FINAL ACCROCHEUR qui s'adapte parfaitement au contenu de l'histoire que tu vas créer. Il s'agit d'un LIVRE COMPLET.
+OBJECTIF : Écris une nouvelle histoire de la série. L'idée de départ ou le thème est "${params.title}". Tu dois GÉNÉRER UN TITRE FINAL ACCROCHEUR qui s'adapte parfaitement au contenu de l'histoire que tu vas créer. Il s'agit d'un LIVRE COMPLET.
+${params.tomeTheme ? `\nATMOSPHÈRE / VARIATION THÉMATIQUE : ${params.tomeTheme}` : ''}
 
 TRANCHE D'ÂGE CIBLE : ${params.ageRange} (Adapte le vocabulaire, la complexité des phrases et la profondeur des thèmes à cet âge)
 UNIVERS / LIEU DE L'ACTION : ${params.universe}
@@ -89,7 +91,7 @@ CONTRAINTES DE STYLE :
 - Rédige un récit authentique, naturel et de haute qualité.
 - Intègre les traits et signatures des personnages de manière très subtile et fluide, sans forcer le trait ni faire de focus excessif dessus.
 - Phrases courtes, langage accessible pour la tranche d'âge ${params.ageRange}.${lexiconInstruction}
-- Longueur : environ 270 mots par séquence maximum. Le texte doit tenir sur une demi-page paysage A4. Sois concis mais expressif, avec des descriptions vivantes et des dialogues courts.
+- Longueur : environ 400 mots par séquence. Sois expressif et immersif, avec des descriptions vivantes, des dialogues riches et une narration enveloppante.
 
 Génère le livre au format JSON strict. Divise l'histoire en ${chapterCount} séquences logiques (utilise le tableau "chapters" dans le JSON pour ces séquences, mais n'utilise pas le mot "chapitre" dans le texte). Pour chaque séquence, fournis une description visuelle détaillée (imagePrompt) qui servira à générer une illustration. L'imagePrompt doit décrire l'action, le décor africain, et préciser quels personnages sont présents, SANS mentionner de numéro de chapitre ou de tome et SANS demander de texte sur l'image.`;
 

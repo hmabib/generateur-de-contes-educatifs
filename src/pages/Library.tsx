@@ -3,17 +3,19 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Book, Trash2, Printer, Loader2, Download, Upload, FileText,
   Pencil, Eye, X, ChevronLeft, ChevronRight, Search, SlidersHorizontal,
-  BookOpen, User, MapPin, Calendar, Hash, Save, ArrowLeft
+  BookOpen, User, MapPin, Calendar, Save, ArrowLeft, Palette
 } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { BookPDF } from '../components/BookPDF';
 import { StoryReader } from '../components/StoryReader';
 import { exportToWord } from '../utils/exportWord';
+import { getTomeTheme, tomeThemes } from '../data/tomeThemes';
 
 interface Story {
   id: number;
   title: string;
   tomeNumber: string;
+  tomeTheme?: string;
   content: string;
   imageUrl?: string;
   date: string;
@@ -73,7 +75,7 @@ export function Library() {
   };
 
   const handleDelete = (id: number) => {
-    if (confirm('Voulez-vous vraiment supprimer ce tome ?')) {
+    if (confirm('Voulez-vous vraiment supprimer cette histoire ?')) {
       const updated = stories.filter(s => s.id !== id);
       saveStories(updated);
       if (selectedStory?.id === id) {
@@ -106,7 +108,7 @@ export function Library() {
         const newStories = imported.filter((s: Story) => !existingIds.has(s.id));
         const merged = [...newStories, ...stories];
         saveStories(merged);
-        alert(`${newStories.length} tome(s) importé(s) avec succès !`);
+        alert(`${newStories.length} histoire(s) importée(s) avec succès !`);
       } catch {
         alert("Erreur lors de l'importation. Vérifiez le format du fichier.");
       }
@@ -174,7 +176,7 @@ export function Library() {
   const startEditMeta = () => {
     if (!selectedStory) return;
     setMetaForm({
-      tomeNumber: selectedStory.tomeNumber,
+      tomeTheme: selectedStory.tomeTheme || 'neutre',
       guestName: selectedStory.guestName || '',
       guestStyle: selectedStory.guestStyle || '',
       country: selectedStory.country || '',
@@ -257,7 +259,7 @@ export function Library() {
             <div className="flex items-center gap-3 text-xs text-brand-ink/50">
               {selectedStory.guestName && <span className="flex items-center gap-1"><User size={12} /> {selectedStory.guestName}</span>}
               {selectedStory.country && <span className="flex items-center gap-1"><MapPin size={12} /> {selectedStory.country}</span>}
-              <span className="flex items-center gap-1"><Hash size={12} /> {selectedStory.tomeNumber}</span>
+              {(() => { const t = getTomeTheme(selectedStory.tomeTheme || ''); return t ? <span className="flex items-center gap-1"><Palette size={12} /> {t.name}</span> : null; })()}
             </div>
           </div>
 
@@ -283,7 +285,7 @@ export function Library() {
                 {data && (
                   <PDFDownloadLink
                     document={<BookPDF story={data} tomeNumber={selectedStory.tomeNumber} groupImage={selectedStory.imageUrl || null} lexiconLanguage={selectedStory.lexiconLanguage} />}
-                    fileName={`Les_Gardiens_Tome_${selectedStory.tomeNumber}.pdf`}
+                    fileName={`Les_Gardiens_${selectedStory.title.replace(/\s+/g, '_')}.pdf`}
                     className="flex items-center gap-2 bg-white text-brand-olive px-3 py-2 rounded-full text-sm font-medium border border-brand-olive/20 hover:bg-brand-olive/10 transition-colors"
                   >
                     {({ loading }) => (<>{loading ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />} PDF</>)}
@@ -321,9 +323,11 @@ export function Library() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-brand-olive-light uppercase tracking-widest mb-1">N° Tome</label>
-                    <input value={metaForm.tomeNumber || ''} onChange={e => setMetaForm({ ...metaForm, tomeNumber: e.target.value })}
-                      className="w-full bg-brand-bg border border-brand-olive/20 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-olive/50" />
+                    <label className="block text-xs font-bold text-brand-olive-light uppercase tracking-widest mb-1">Variation thématique</label>
+                    <select value={metaForm.tomeTheme || 'neutre'} onChange={e => setMetaForm({ ...metaForm, tomeTheme: e.target.value })}
+                      className="w-full bg-brand-bg border border-brand-olive/20 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-olive/50">
+                      {tomeThemes.map(t => <option key={t.id} value={t.id}>{t.icon} {t.name}</option>)}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-brand-olive-light uppercase tracking-widest mb-1">Pays</label>
@@ -470,9 +474,9 @@ export function Library() {
                         data.lexicon?.length > 0 && (
                           <div className="bg-white rounded-2xl shadow-sm border border-brand-olive/10 p-10">
                             <div className="text-center mb-8">
-                              <p className="text-sm text-brand-olive uppercase tracking-[0.3em] mb-2">📖 Vocabulaire</p>
+                              <p className="text-sm text-brand-olive uppercase tracking-[0.3em] mb-2">Vocabulaire</p>
                               <h3 className="text-3xl font-serif font-bold text-brand-ink">
-                                Lexique{selectedStory.lexiconLanguage ? ` — ${selectedStory.lexiconLanguage}` : ''} 🌍
+                                Lexique{selectedStory.lexiconLanguage ? ` — ${selectedStory.lexiconLanguage}` : ''}
                               </h3>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -529,7 +533,7 @@ export function Library() {
           La Bibliothèque
         </h1>
         <p className="text-xl text-brand-ink/70 font-light max-w-2xl mx-auto">
-          {stories.length} {stories.length <= 1 ? 'tome' : 'tomes'} dans votre collection
+          {stories.length} {stories.length <= 1 ? 'histoire' : 'histoires'} dans votre collection
         </p>
       </header>
 
@@ -578,7 +582,7 @@ export function Library() {
         <div className="text-center py-20">
           <BookOpen size={48} className="mx-auto mb-4 text-brand-olive/20" />
           <p className="text-xl font-serif text-brand-ink/40">
-            {stories.length === 0 ? 'Aucun tome sauvegardé.' : 'Aucun résultat trouvé.'}
+            {stories.length === 0 ? 'Aucune histoire sauvegardée.' : 'Aucun résultat trouvé.'}
           </p>
           {stories.length === 0 && (
             <p className="text-sm text-brand-ink/30 mt-2">Les histoires générées seront automatiquement ajoutées ici.</p>
@@ -606,9 +610,11 @@ export function Library() {
                     </div>
                   )}
                   {/* Overlay badge */}
-                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-bold text-brand-olive shadow-sm">
-                    N° {story.tomeNumber}
-                  </div>
+                  {(() => { const t = getTomeTheme(story.tomeTheme || ''); return t && t.id !== 'neutre' ? (
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-bold shadow-sm" style={{ color: t.color }}>
+                      {t.icon} {t.name}
+                    </div>
+                  ) : null; })()}
                   {/* Quick actions overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4 gap-2">
                     <button onClick={(e) => { e.stopPropagation(); openReader(story); }}

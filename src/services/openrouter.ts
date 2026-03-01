@@ -39,6 +39,7 @@ async function callOpenRouter(messages: { role: string; content: string }[], jso
 
 export async function generateStructuredStoryOpenRouter(params: {
   tomeNumber: string;
+  tomeTheme?: string;
   title: string;
   universe: string;
   theme: string;
@@ -97,10 +98,11 @@ Fournis un lexique de ${count} à ${count + 4} mots ${lang} utilisés dans l'his
 Les personnages récurrents de la série (qui DOIVENT TOUS apparaître et jouer un rôle) sont :
 ${charactersList}
 
-Le personnage invité de ce tome :
+Le personnage invité de cette histoire :
 - ${params.guestName} (Description : ${params.guestStyle})
 
-OBJECTIF : Écris le Tome ${params.tomeNumber} de la série. L'idée de départ ou le thème est "${params.title}". Tu dois GÉNÉRER UN TITRE FINAL ACCROCHEUR qui s'adapte parfaitement au contenu de l'histoire que tu vas créer. Il s'agit d'un LIVRE COMPLET.
+OBJECTIF : Écris une nouvelle histoire de la série. L'idée de départ ou le thème est "${params.title}". Tu dois GÉNÉRER UN TITRE FINAL ACCROCHEUR qui s'adapte parfaitement au contenu de l'histoire que tu vas créer. Il s'agit d'un LIVRE COMPLET.
+${params.tomeTheme ? `\nATMOSPHÈRE / VARIATION THÉMATIQUE : ${params.tomeTheme}` : ''}
 
 TRANCHE D'ÂGE CIBLE : ${params.ageRange}
 UNIVERS / LIEU DE L'ACTION : ${params.universe}
@@ -118,7 +120,7 @@ CONTRAINTES DE STYLE :
 - Rédige un récit authentique, naturel et de haute qualité.
 - Intègre les traits et signatures des personnages de manière très subtile et fluide.
 - Phrases courtes, langage accessible pour la tranche d'âge ${params.ageRange}.${lexiconInstruction}
-- Longueur : environ 270 mots par séquence maximum. Le texte doit tenir sur une demi-page paysage A4. Sois concis mais expressif, avec des descriptions vivantes et des dialogues courts.
+- Longueur : environ 400 mots par séquence. Sois expressif et immersif, avec des descriptions vivantes, des dialogues riches et une narration enveloppante.
 
 RÉPONDS UNIQUEMENT EN JSON STRICT avec cette structure exacte :
 {

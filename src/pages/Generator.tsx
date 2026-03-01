@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { generateStructuredStory, generateCharacterImage, generateChapterImage, supportsImageGeneration } from '../services/ai';
 import { Loader2, Wand2, Save, BookOpen, ImagePlus, Image as ImageIcon, Printer, ChevronDown, ChevronUp, Star, UserCheck, FileText } from 'lucide-react';
 import { countryOptions, getCountryOptions } from '../data/generatorOptions';
+import { tomeThemes, getTomeTheme } from '../data/tomeThemes';
 import { getCharacters } from '../data/characters';
 import { getUniverses } from '../data/universes';
 import { getLanguages } from '../data/dictionary';
@@ -47,7 +48,8 @@ export function Generator() {
   const [exportingWord, setExportingWord] = useState(false);
 
   const [formData, setFormData] = useState({
-    tomeNumber: '2',
+    tomeNumber: 'neutre',
+    tomeTheme: 'neutre',
     title: 'Le Chant de la Forêt Sacrée',
     universe: 'Le Village de Nkonté',
     theme: 'la déforestation',
@@ -144,8 +146,10 @@ export function Generator() {
     }, 8000);
 
     try {
+      const selectedTheme = getTomeTheme(formData.tomeTheme);
       const storyParams = {
         ...formData,
+        tomeTheme: selectedTheme?.promptStyle || '',
         chapterCount: parseInt(formData.chapterCount),
         lexiconWordCount: parseInt(formData.lexiconWordCount),
         recurrentCharacters: getCharacters(),
@@ -325,7 +329,8 @@ export function Generator() {
     const newEntry = {
       id: Date.now(),
       title: storyData.title || formData.title,
-      tomeNumber: formData.tomeNumber,
+      tomeNumber: formData.tomeTheme,
+      tomeTheme: formData.tomeTheme,
       content: JSON.stringify(storyData),
       imageUrl: image,
       date: new Date().toISOString(),
@@ -370,11 +375,11 @@ export function Generator() {
         guestStyle: formData.guestStyle,
         guestImage: generatedImage,
       });
-      alert('Tome mis à jour dans la bibliothèque !');
+      alert('Histoire mise à jour dans la bibliothèque !');
     } else {
       const id = autoSaveStory(story, groupImage || generatedImage);
       setSavedStoryId(id);
-      alert('Tome sauvegardé dans la bibliothèque !');
+      alert('Histoire sauvegardée dans la bibliothèque !');
     }
   };
 
@@ -522,20 +527,35 @@ export function Generator() {
                   Histoire
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-brand-olive-light uppercase tracking-widest mb-1">
-                      Tome N°
-                    </label>
-                    <input
-                      type="text"
-                      name="tomeNumber"
-                      value={formData.tomeNumber}
-                      onChange={handleChange}
-                      className="w-full bg-white border border-brand-olive/20 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-olive/50"
-                      required
-                    />
+                {/* Tome Theme Selector */}
+                <div>
+                  <label className="block text-xs font-bold text-brand-olive-light uppercase tracking-widest mb-2">
+                    Variation / Atmosphère
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {tomeThemes.map(theme => (
+                      <button
+                        key={theme.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, tomeNumber: theme.id, tomeTheme: theme.id })}
+                        className={`relative p-3 rounded-xl border-2 text-left transition-all text-xs ${
+                          formData.tomeTheme === theme.id
+                            ? 'border-brand-olive bg-brand-olive/5 shadow-md'
+                            : 'border-brand-olive/10 bg-white hover:border-brand-olive/30'
+                        }`}
+                      >
+                        <div className="text-lg mb-1">{theme.icon}</div>
+                        <div className="font-bold text-brand-ink leading-tight">{theme.name}</div>
+                        <div className="text-brand-ink/50 mt-0.5 line-clamp-2 leading-tight" style={{ fontSize: '10px' }}>{theme.description}</div>
+                        {formData.tomeTheme === theme.id && (
+                          <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-brand-olive rounded-full" />
+                        )}
+                      </button>
+                    ))}
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-brand-olive-light uppercase tracking-widest mb-1">
                       Âge Cible
@@ -876,14 +896,14 @@ export function Generator() {
                     <BookOpen size={24} />
                   </div>
                   <div>
-                    <span className="text-sm text-brand-olive font-mono block">Tome {formData.tomeNumber}</span>
+                    {(() => { const t = getTomeTheme(formData.tomeTheme); return t ? <span className="text-sm text-brand-olive font-mono block">{t.icon} {t.name}</span> : null; })()}
                     {story.title}
                   </div>
                 </h2>
                 <div className="flex gap-2 flex-wrap justify-end">
                   <PDFDownloadLink
                     document={<BookPDF story={story} tomeNumber={formData.tomeNumber} groupImage={groupImage} lexiconLanguage={formData.lexiconLanguage || undefined} />}
-                    fileName={`Les_Gardiens_Tome_${formData.tomeNumber}.pdf`}
+                    fileName={`Les_Gardiens_${story.title.replace(/\s+/g, '_')}.pdf`}
                     className="flex items-center gap-2 bg-brand-bg text-brand-olive px-4 py-2 rounded-full font-medium hover:bg-brand-olive/10 transition-colors border border-brand-olive/20 text-sm"
                   >
                     {({ loading: pdfLoading }) => (

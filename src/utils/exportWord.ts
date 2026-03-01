@@ -35,7 +35,7 @@ const BRAND_OLIVE = 'E07A5F';
 const BRAND_ACCENT = '81B29A';
 const BRAND_INK = '2B2D42';
 
-const CHAPTER_EMOJIS = ['🌿', '🦁', '🌍', '🌺', '✨', '🐘', '🌳', '🦜', '💧', '🌞', '🐢', '🌈', '🦋'];
+const CHAPTER_MARKERS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII'];
 
 // Convert base64 data URL to Uint8Array for docx ImageRun
 async function imageUrlToBuffer(url: string): Promise<Uint8Array | null> {
@@ -124,11 +124,14 @@ export async function exportToWord(
 
   coverChildren.push(new Paragraph({ spacing: { after: 600 }, children: [] }));
 
-  // Decorative emojis
+  // Decorative line
   coverChildren.push(new Paragraph({
     alignment: AlignmentType.CENTER,
     spacing: { after: 200 },
-    children: [new TextRun({ text: '🌍  🌿  ✨', size: 44, font: 'Segoe UI Emoji' })],
+    border: {
+      bottom: { style: BorderStyle.SINGLE, size: 2, color: BRAND_ACCENT, space: 4 },
+    },
+    children: [new TextRun({ text: '', size: 4 })],
   }));
 
   // Series title
@@ -185,7 +188,7 @@ export async function exportToWord(
     alignment: AlignmentType.CENTER,
     spacing: { before: 600 },
     children: [new TextRun({
-      text: 'Contes Éducatifs Africains 🌱',
+      text: 'Contes Educatifs Africains',
       color: '8E9299',
       size: 20,
       font: 'Georgia',
@@ -206,15 +209,15 @@ export async function exportToWord(
   // ═══ CHAPTER PAGES ═══
   for (let i = 0; i < story.chapters.length; i++) {
     const chapter = story.chapters[i];
-    const emoji = CHAPTER_EMOJIS[i % CHAPTER_EMOJIS.length];
+    const marker = CHAPTER_MARKERS[i % CHAPTER_MARKERS.length];
     const chapterChildren: Paragraph[] = [];
 
-    // Chapter emoji + number
+    // Chapter marker + number
     chapterChildren.push(new Paragraph({
       alignment: AlignmentType.LEFT,
       spacing: { after: 100 },
       children: [new TextRun({
-        text: `${emoji}  ${i + 1} / ${story.chapters.length}`,
+        text: `${marker}  —  ${i + 1} / ${story.chapters.length}`,
         color: BRAND_ACCENT,
         size: 18,
         font: 'Georgia',
@@ -289,7 +292,7 @@ export async function exportToWord(
       alignment: AlignmentType.LEFT,
       spacing: { after: 100 },
       children: [new TextRun({
-        text: '📖  VOCABULAIRE',
+        text: 'VOCABULAIRE',
         color: BRAND_OLIVE,
         size: 20,
         font: 'Georgia',
@@ -302,7 +305,7 @@ export async function exportToWord(
       heading: HeadingLevel.HEADING_2,
       spacing: { after: 200 },
       children: [new TextRun({
-        text: `Lexique${lexiconLanguage ? ` — ${lexiconLanguage}` : ''} 🌍`,
+        text: `Lexique${lexiconLanguage ? ` — ${lexiconLanguage}` : ''}`,
         bold: true,
         color: BRAND_INK,
         size: 40,
@@ -314,7 +317,7 @@ export async function exportToWord(
     lexiconChildren.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 400 },
-      children: [new TextRun({ text: '─────────── ✦ ───────────', color: BRAND_OLIVE, size: 20, font: 'Georgia' })],
+      children: [new TextRun({ text: '——————————————————', color: BRAND_OLIVE, size: 20, font: 'Georgia' })],
     }));
 
     // Lexicon entries
@@ -374,5 +377,5 @@ export async function exportToWord(
   const doc = new Document({ sections });
 
   const blob = await Packer.toBlob(doc);
-  saveAs(blob, `Les_Gardiens_${tomeNumber ? `Tome_${tomeNumber}` : story.title.replace(/\s+/g, '_')}.docx`);
+  saveAs(blob, `Les_Gardiens_${story.title.replace(/\s+/g, '_')}.docx`);
 }

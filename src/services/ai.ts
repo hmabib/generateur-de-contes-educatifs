@@ -12,6 +12,7 @@ import {
 
 export interface StoryGenerationParams {
   tomeNumber: string;
+  tomeTheme?: string;
   title: string;
   universe: string;
   theme: string;
