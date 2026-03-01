@@ -76,22 +76,20 @@ const s = StyleSheet.create({
     opacity: 0.3,
   },
   coverSeries: {
-    fontSize: 11,
+    fontSize: 12,
     color: BRAND.accent,
     letterSpacing: 4,
-    marginBottom: 8,
+    marginBottom: 12,
     textAlign: 'center',
     textTransform: 'uppercase',
   },
-  coverTome: {
-    fontSize: 11,
-    color: BRAND.olive,
-    letterSpacing: 3,
-    marginBottom: 20,
+  coverEmoji: {
+    fontSize: 22,
     textAlign: 'center',
+    marginBottom: 10,
   },
   coverTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontFamily: 'Serif',
     fontWeight: 'bold',
     color: BRAND.ink,
@@ -162,18 +160,25 @@ const s = StyleSheet.create({
     position: 'relative',
   },
   chapterTitleInText: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Serif',
     fontWeight: 'bold',
     color: BRAND.olive,
-    marginBottom: 12,
+    marginBottom: 6,
     lineHeight: 1.3,
+  },
+  chapterSubLabel: {
+    fontSize: 9,
+    color: BRAND.accent,
+    letterSpacing: 2,
+    marginBottom: 10,
+    textTransform: 'uppercase',
   },
   chapterDecoLine: {
     width: 40,
     height: 2,
     backgroundColor: BRAND.oliveLight,
-    marginBottom: 16,
+    marginBottom: 14,
     opacity: 0.7,
   },
   paragraph: {
@@ -183,13 +188,23 @@ const s = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'justify',
   },
+  dialogueText: {
+    fontSize: 11,
+    lineHeight: 1.75,
+    color: '#5B6E4E',
+    marginBottom: 8,
+    textAlign: 'justify',
+    fontStyle: 'italic',
+  },
   boldText: {
     fontFamily: 'Serif',
     fontWeight: 'bold',
+    color: BRAND.olive,
   },
   italicText: {
     fontFamily: 'Serif',
     fontStyle: 'italic',
+    color: BRAND.accent,
   },
   dropCap: {
     fontSize: 32,
@@ -287,6 +302,11 @@ const s = StyleSheet.create({
   },
 });
 
+// Helper: detect if a paragraph is dialogue (starts with — or « or " or -)
+function isDialogue(text: string): boolean {
+  return /^[\u2014\u2013\u00ab""'\-]/.test(text.trim());
+}
+
 // Helper: parse markdown inline formatting to PDF Text elements
 function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
   const paragraphs = text.split('\n').filter(p => p.trim());
@@ -304,6 +324,9 @@ function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
         </Text>
       );
     }
+
+    // Determine if this paragraph is dialogue
+    const dialogue = isDialogue(trimmed);
 
     // Parse inline bold and italic
     const parts = trimmed.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
@@ -332,8 +355,11 @@ function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
       }
     }
 
+    // Use dialogue style for dialogue paragraphs
+    const paragraphStyle = dialogue ? s.dialogueText : s.paragraph;
+
     return (
-      <Text key={pIndex} style={s.paragraph}>
+      <Text key={pIndex} style={paragraphStyle}>
         {parts.map((part, i) => {
           if (part.startsWith('**') && part.endsWith('**')) {
             return <Text key={i} style={s.boldText}>{part.slice(2, -2)}</Text>;
@@ -346,6 +372,12 @@ function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
       </Text>
     );
   }).filter(Boolean);
+}
+
+// Chapter decorative emojis (rotate through these for variety)
+const CHAPTER_EMOJIS = ['🌿', '🦁', '🌍', '🌺', '✨', '🐘', '🌳', '🦜', '💧', '🌞', '🐢', '🌈', '🦋'];
+function getChapterEmoji(index: number): string {
+  return CHAPTER_EMOJIS[index % CHAPTER_EMOJIS.length];
 }
 
 type Chapter = {
@@ -395,13 +427,11 @@ export const BookPDF: React.FC<BookPDFProps> = ({ story, tomeNumber, groupImage,
       {/* Right half: title */}
       <View style={s.coverRight}>
         <View style={s.coverBorderDecor} />
+        <Text style={s.coverEmoji}>🌍 🌿 ✨</Text>
         <Text style={s.coverSeries}>Les Gardiens de la Terre</Text>
-        {tomeNumber && (
-          <Text style={s.coverTome}>Tome {tomeNumber}</Text>
-        )}
         <View style={s.coverDivider} />
         <Text style={s.coverTitle}>{story.title}</Text>
-        <Text style={s.coverSubtitle}>Contes Éducatifs Africains</Text>
+        <Text style={s.coverSubtitle}>Contes Éducatifs Africains 🌱</Text>
       </View>
     </Page>
 
@@ -421,6 +451,7 @@ export const BookPDF: React.FC<BookPDFProps> = ({ story, tomeNumber, groupImage,
 
         {/* Right half: text */}
         <View style={s.textHalf} wrap>
+          <Text style={s.chapterSubLabel}>{getChapterEmoji(index)}  {index + 1} / {story.chapters.length}</Text>
           <Text style={s.chapterTitleInText}>{chapter.title}</Text>
           <View style={s.chapterDecoLine} />
           {renderMarkdownToPDF(chapter.content, index === 0)}
@@ -435,8 +466,8 @@ export const BookPDF: React.FC<BookPDFProps> = ({ story, tomeNumber, groupImage,
       <Page size={PAGE_SIZE} style={s.lexiconPage}>
         <View style={s.lexiconDecoLeft} />
         <View style={s.lexiconContent}>
-          <Text style={s.lexiconHeader}>Vocabulaire</Text>
-          <Text style={s.lexiconTitle}>Lexique{lexiconLanguage ? ` — ${lexiconLanguage}` : ''}</Text>
+          <Text style={s.lexiconHeader}>📖  Vocabulaire</Text>
+          <Text style={s.lexiconTitle}>Lexique{lexiconLanguage ? ` — ${lexiconLanguage}` : ''} 🌍</Text>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
             <View style={{ flex: 1, height: 0.5, backgroundColor: BRAND.olive, opacity: 0.3 }} />
