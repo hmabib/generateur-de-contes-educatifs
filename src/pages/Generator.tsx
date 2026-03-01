@@ -133,6 +133,7 @@ export function Generator() {
     setStory(null);
     setGeneratedImage(null);
     setGroupImage(null);
+    setSavedStoryId(null);
 
     // Start progress messages
     let msgIndex = 0;
@@ -162,9 +163,15 @@ export function Generator() {
         ]);
         setStory(storyResult);
         setGeneratedImage(imageResult);
+        // Auto-save to library
+        const id = autoSaveStory(storyResult, imageResult);
+        setSavedStoryId(id);
       } else {
         const storyResult = await generateStructuredStory(storyParams);
         setStory(storyResult);
+        // Auto-save to library
+        const id = autoSaveStory(storyResult, null);
+        setSavedStoryId(id);
       }
     } catch (error: any) {
       console.error('Erreur génération:', error);
@@ -260,6 +267,10 @@ export function Generator() {
       const prompt = `Illustration de couverture. Thème: ${formData.theme}. On y voit le groupe d'enfants en pleine action. Style 2D, coloré, chaleureux, dessiné à la main, conte africain, sans aucun texte, sans titre, sans écriture.`;
       const result = await generateChapterImage(prompt, referenceImages);
       setGroupImage(result);
+      // Update saved story with cover image
+      if (savedStoryId) {
+        updateSavedStory(savedStoryId, { imageUrl: result });
+      }
     } catch (error) {
       console.error(error);
       alert("Erreur lors de la génération de l'image de groupe.");
@@ -304,21 +315,67 @@ export function Generator() {
     }
   };
 
-  const handleSave = () => {
-    if (!story) return;
+  // Auto-save story to library
+  const autoSaveStory = (storyData: StoryData, image: string | null) => {
     const savedStories = JSON.parse(localStorage.getItem('gardiens_stories') || '[]');
-    savedStories.push({
+    // Generate a synopsis from first chapter content
+    const firstChapter = storyData.chapters[0];
+    const synopsis = firstChapter ? firstChapter.content.slice(0, 200).replace(/\n/g, ' ').trim() + '...' : '';
+
+    const newEntry = {
       id: Date.now(),
-      title: story.title || formData.title,
+      title: storyData.title || formData.title,
       tomeNumber: formData.tomeNumber,
-      content: JSON.stringify(story),
-      imageUrl: groupImage || generatedImage,
+      content: JSON.stringify(storyData),
+      imageUrl: image,
       date: new Date().toISOString(),
       isStructured: true,
       lexiconLanguage: formData.lexiconLanguage || undefined,
-    });
+      guestName: formData.guestName,
+      guestStyle: formData.guestStyle,
+      guestImage: null as string | null,
+      country: formData.country,
+      ageRange: formData.ageRange,
+      synopsis,
+      theme: formData.theme,
+      chapterCount: parseInt(formData.chapterCount),
+    };
+    savedStories.push(newEntry);
     localStorage.setItem('gardiens_stories', JSON.stringify(savedStories));
-    alert('Tome sauvegardé dans la bibliothèque !');
+    return newEntry.id;
+  };
+
+  // Update saved story (for image updates, etc.)
+  const updateSavedStory = (storyId: number, updates: Record<string, any>) => {
+    const savedStories = JSON.parse(localStorage.getItem('gardiens_stories') || '[]');
+    const idx = savedStories.findIndex((s: any) => s.id === storyId);
+    if (idx !== -1) {
+      savedStories[idx] = { ...savedStories[idx], ...updates };
+      localStorage.setItem('gardiens_stories', JSON.stringify(savedStories));
+    }
+  };
+
+  const [savedStoryId, setSavedStoryId] = useState<number | null>(null);
+
+  const handleSave = () => {
+    if (!story) return;
+    if (savedStoryId) {
+      // Update existing
+      updateSavedStory(savedStoryId, {
+        title: story.title || formData.title,
+        content: JSON.stringify(story),
+        imageUrl: groupImage || generatedImage,
+        lexiconLanguage: formData.lexiconLanguage || undefined,
+        guestName: formData.guestName,
+        guestStyle: formData.guestStyle,
+        guestImage: generatedImage,
+      });
+      alert('Tome mis à jour dans la bibliothèque !');
+    } else {
+      const id = autoSaveStory(story, groupImage || generatedImage);
+      setSavedStoryId(id);
+      alert('Tome sauvegardé dans la bibliothèque !');
+    }
   };
 
   const handleSaveGuest = () => {
