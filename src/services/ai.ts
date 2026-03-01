@@ -10,7 +10,7 @@ import {
   generateCharacterProfileOpenRouter,
 } from "./openrouter";
 
-export async function generateStructuredStory(params: {
+export interface StoryGenerationParams {
   tomeNumber: string;
   title: string;
   universe: string;
@@ -23,7 +23,15 @@ export async function generateStructuredStory(params: {
   guestStyle: string;
   ageRange: string;
   recurrentCharacters: any[];
-}) {
+  chapterCount?: number;
+  writingStyle?: string;
+  country?: string;
+  includeLexicon?: boolean;
+  lexiconLanguage?: string;
+  lexiconWordCount?: number;
+}
+
+export async function generateStructuredStory(params: StoryGenerationParams) {
   const config = getProviderConfig();
   if (config?.provider === 'openrouter') {
     return generateStructuredStoryOpenRouter(params);

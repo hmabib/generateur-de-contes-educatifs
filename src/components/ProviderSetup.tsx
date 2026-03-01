@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Key, Sparkles, ArrowRight, Check, AlertCircle, Loader2, Zap, Globe, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { Key, ArrowRight, Check, AlertCircle, Loader2, Zap, Globe, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { ProviderType, setProviderConfig, OPENROUTER_MODELS, DEFAULT_OPENROUTER_MODEL } from '../services/ai-provider';
 import { validateOpenRouterKey } from '../services/openrouter';
+import { Logo } from './Logo';
 
 interface ProviderSetupProps {
   onComplete: () => void;
@@ -34,7 +35,7 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
       if (provider === 'openrouter') {
         const valid = await validateOpenRouterKey(apiKey.trim(), model);
         if (!valid) {
-          setError('Cl\u00e9 API invalide ou mod\u00e8le inaccessible. V\u00e9rifiez votre cl\u00e9 et r\u00e9essayez.');
+          setError('Clé API invalide ou modèle inaccessible. Vérifiez votre clé et réessayez.');
           setValidating(false);
           return;
         }
@@ -48,7 +49,7 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
 
       onComplete();
     } catch {
-      setError('Impossible de valider la cl\u00e9. V\u00e9rifiez votre connexion internet.');
+      setError('Impossible de valider la clé. Vérifiez votre connexion internet.');
     } finally {
       setValidating(false);
     }
@@ -77,15 +78,15 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                className="w-20 h-20 bg-gradient-to-br from-brand-olive to-brand-olive-light rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-olive/20"
+                className="w-20 h-20 bg-gradient-to-br from-brand-accent/20 to-brand-olive/10 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-olive/10"
               >
-                <Sparkles className="w-10 h-10 text-white" />
+                <Logo size={56} />
               </motion.div>
               <h1 className="text-4xl font-serif font-bold text-brand-ink mb-3">
-                G\u00e9n\u00e9rateur de Contes
+                Les Gardiens de la Terre
               </h1>
               <p className="text-lg text-brand-ink/60 max-w-md mx-auto">
-                Choisissez votre fournisseur d'IA pour commencer \u00e0 cr\u00e9er des histoires magiques.
+                Choisissez votre fournisseur d'IA pour commencer à créer des histoires magiques.
               </p>
             </div>
 
@@ -105,22 +106,22 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
                   <div>
                     <h3 className="text-xl font-bold text-brand-ink">Google Gemini</h3>
                     <span className="text-xs font-medium text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded-full">
-                      Recommand\u00e9
+                      Recommandé
                     </span>
                   </div>
                 </div>
                 <ul className="space-y-2.5 text-sm text-brand-ink/70 mb-5">
                   <li className="flex items-start gap-2">
                     <Check size={16} className="text-brand-accent mt-0.5 shrink-0" />
-                    <span>G\u00e9n\u00e9ration de texte <strong>et d'images</strong></span>
+                    <span>Génération de texte <strong>et d'images</strong></span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check size={16} className="text-brand-accent mt-0.5 shrink-0" />
-                    <span>Illustrations personnalis\u00e9es des personnages</span>
+                    <span>Illustrations personnalisées des personnages</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check size={16} className="text-brand-accent mt-0.5 shrink-0" />
-                    <span>Meilleure qualit\u00e9 pour les contes en fran\u00e7ais</span>
+                    <span>Meilleure qualité pour les contes en français</span>
                   </li>
                 </ul>
                 <div className="flex items-center gap-2 text-brand-olive font-medium group-hover:gap-3 transition-all">
@@ -143,22 +144,22 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
                   <div>
                     <h3 className="text-xl font-bold text-brand-ink">OpenRouter</h3>
                     <span className="text-xs font-medium text-brand-olive-light bg-brand-olive-light/10 px-2 py-0.5 rounded-full">
-                      Multi-mod\u00e8les
+                      Multi-modèles
                     </span>
                   </div>
                 </div>
                 <ul className="space-y-2.5 text-sm text-brand-ink/70 mb-5">
                   <li className="flex items-start gap-2">
                     <Check size={16} className="text-brand-accent mt-0.5 shrink-0" />
-                    <span>Acc\u00e8s \u00e0 GPT-4o, Claude, Gemini, Llama...</span>
+                    <span>Accès à GPT-4o, Claude, Gemini, Llama...</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check size={16} className="text-brand-accent mt-0.5 shrink-0" />
-                    <span>Choix du mod\u00e8le selon vos besoins</span>
+                    <span>Choix du modèle selon vos besoins</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <AlertCircle size={16} className="text-brand-olive-light mt-0.5 shrink-0" />
-                    <span>G\u00e9n\u00e9ration de texte uniquement (pas d'images)</span>
+                    <span>Génération de texte uniquement (pas d'images)</span>
                   </li>
                 </ul>
                 <div className="flex items-center gap-2 text-brand-olive font-medium group-hover:gap-3 transition-all">
@@ -207,7 +208,7 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
                   <h2 className="text-2xl font-serif font-bold text-brand-ink">
                     {provider === 'gemini' ? 'Google Gemini' : 'OpenRouter'}
                   </h2>
-                  <p className="text-sm text-brand-ink/50">Entrez votre cl\u00e9 API</p>
+                  <p className="text-sm text-brand-ink/50">Entrez votre clé API</p>
                 </div>
               </div>
 
@@ -216,7 +217,7 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
                 <div>
                   <label className="block text-xs font-bold text-brand-ink/60 uppercase tracking-widest mb-2">
                     <Key size={12} className="inline mr-1" />
-                    Cl\u00e9 API
+                    Clé API
                   </label>
                   <div className="relative">
                     <input
@@ -242,7 +243,7 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
                   <div>
                     <label className="block text-xs font-bold text-brand-ink/60 uppercase tracking-widest mb-2">
                       <ChevronDown size={12} className="inline mr-1" />
-                      Mod\u00e8le
+                      Modèle
                     </label>
                     <select
                       value={model}
@@ -280,12 +281,12 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
                   {validating ? (
                     <>
                       <Loader2 size={20} className="animate-spin" />
-                      V\u00e9rification...
+                      Vérification...
                     </>
                   ) : (
                     <>
-                      <Sparkles size={20} />
-                      Commencer \u00e0 cr\u00e9er
+                      <Logo size={24} />
+                      Commencer à créer
                     </>
                   )}
                 </button>
@@ -294,14 +295,14 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
                 <p className="text-center text-xs text-brand-ink/40">
                   {provider === 'gemini' ? (
                     <>
-                      Obtenez votre cl\u00e9 sur{' '}
+                      Obtenez votre clé sur{' '}
                       <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-brand-olive hover:underline">
                         Google AI Studio
                       </a>
                     </>
                   ) : (
                     <>
-                      Obtenez votre cl\u00e9 sur{' '}
+                      Obtenez votre clé sur{' '}
                       <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer" className="text-brand-olive hover:underline">
                         openrouter.ai/keys
                       </a>
@@ -311,7 +312,7 @@ export function ProviderSetup({ onComplete }: ProviderSetupProps) {
 
                 {/* Info about key storage */}
                 <p className="text-center text-xs text-brand-ink/30">
-                  Votre cl\u00e9 est stock\u00e9e localement dans votre navigateur uniquement.
+                  Votre clé est stockée localement dans votre navigateur uniquement.
                 </p>
               </div>
             </div>

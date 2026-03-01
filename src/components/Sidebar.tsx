@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Globe, PenTool, Library, Sparkles, Settings, LogOut, Zap } from 'lucide-react';
+import { Home, Users, Globe, PenTool, Library, Settings, Zap, Languages } from 'lucide-react';
 import { getProviderConfig, clearProviderConfig } from '../services/ai-provider';
+import { Logo } from './Logo';
 
 interface SidebarProps {
   onResetProvider: () => void;
@@ -13,8 +14,9 @@ export function Sidebar({ onResetProvider }: SidebarProps) {
     { to: '/', icon: Home, label: 'Accueil' },
     { to: '/personnages', icon: Users, label: 'Personnages' },
     { to: '/univers', icon: Globe, label: 'Univers' },
-    { to: '/generateur', icon: PenTool, label: 'G\u00e9n\u00e9rateur' },
-    { to: '/bibliotheque', icon: Library, label: 'Biblioth\u00e8que' },
+    { to: '/generateur', icon: PenTool, label: 'Générateur' },
+    { to: '/bibliotheque', icon: Library, label: 'Bibliothèque' },
+    { to: '/dictionnaire', icon: Languages, label: 'Dictionnaire' },
   ];
 
   const handleReset = () => {
@@ -27,19 +29,19 @@ export function Sidebar({ onResetProvider }: SidebarProps) {
       <div className="p-8 border-b border-brand-olive/10 relative overflow-hidden">
         <div className="absolute -right-4 -top-4 w-24 h-24 bg-brand-olive/5 rounded-full blur-xl"></div>
         <div className="flex items-center gap-3 mb-2 relative z-10">
-          <div className="w-10 h-10 bg-gradient-to-br from-brand-olive to-brand-olive-light rounded-xl flex items-center justify-center text-white shadow-sm">
-            <Sparkles size={20} />
+          <div className="w-12 h-12 bg-gradient-to-br from-brand-accent/20 to-brand-olive/10 rounded-xl flex items-center justify-center shadow-sm">
+            <Logo size={36} />
           </div>
-          <h1 className="text-2xl font-bold font-serif text-brand-ink leading-tight">
-            G\u00e9n\u00e9rateur<br />de Contes
+          <h1 className="text-xl font-bold font-serif text-brand-ink leading-tight">
+            Les Gardiens<br />de la Terre
           </h1>
         </div>
-        <p className="text-sm text-brand-olive font-medium mt-3 tracking-wide uppercase">
-          Histoires \u00c9ducatives
+        <p className="text-xs text-brand-olive font-medium mt-3 tracking-wider uppercase">
+          Contes Éducatifs Africains
         </p>
       </div>
 
-      <nav className="flex-1 p-6 space-y-2">
+      <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
         {links.map((link) => (
           <NavLink
             key={link.to}

@@ -12,7 +12,7 @@ export function Home() {
       <header className="text-center space-y-6 relative">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-brand-olive-light/20 rounded-full blur-3xl -z-10"></div>
         <h1 className="text-6xl font-bold font-serif text-transparent bg-clip-text bg-gradient-to-r from-brand-olive to-brand-olive-light pb-2">
-          Générateur de Contes Éducatifs
+          Les Gardiens de la Terre
         </h1>
         <p className="text-2xl text-brand-ink/70 font-light max-w-2xl mx-auto leading-relaxed">
           Créez des histoires illustrées personnalisées pour enfants, ancrées dans la culture africaine.
@@ -77,7 +77,7 @@ export function Home() {
           </li>
           <li className="flex gap-4 items-start">
             <span className="w-8 h-8 rounded-full bg-brand-olive/10 text-brand-olive flex items-center justify-center shrink-0 font-bold mt-1">2</span>
-            <span><strong className="text-brand-ink">Cadre :</strong> Cameroun, village fictif de Nkonté.</span>
+            <span><strong className="text-brand-ink">Cadre :</strong> Afrique — univers personnalisables (Cameroun, Sénégal, Mali, et plus).</span>
           </li>
           <li className="flex gap-4 items-start">
             <span className="w-8 h-8 rounded-full bg-brand-olive/10 text-brand-olive flex items-center justify-center shrink-0 font-bold mt-1">3</span>

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Book, Trash2, Printer, Loader2 } from 'lucide-react';
-import Markdown from 'react-markdown';
+import { Book, Trash2, Printer, Loader2, Download, Upload } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { BookPDF } from '../components/BookPDF';
+import { StoryReader } from '../components/StoryReader';
 
 interface Story {
   id: number;
@@ -15,23 +15,22 @@ interface Story {
   isStructured?: boolean;
 }
 
-type Chapter = {
-  chapterNumber: number;
-  title: string;
-  content: string;
-  imagePrompt: string;
-  imageUrl?: string;
-};
-
 type StoryData = {
   title: string;
-  chapters: Chapter[];
+  chapters: {
+    chapterNumber: number;
+    title: string;
+    content: string;
+    imagePrompt: string;
+    imageUrl?: string;
+  }[];
   lexicon: { word: string; translation: string }[];
 };
 
 export function Library() {
   const [stories, setStories] = useState<Story[]>([]);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('gardiens_stories') || '[]');
@@ -50,92 +49,46 @@ export function Library() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleExportAll = () => {
+    const data = JSON.stringify(stories, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gardiens_stories_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const renderStoryContent = (story: Story) => {
-    if (story.isStructured) {
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
       try {
-        const data: StoryData = JSON.parse(story.content);
-        return (
-          <div className="space-y-16 print:space-y-0">
-            {/* Couverture (Print & Screen) */}
-            <div className="print:h-screen print:flex print:flex-col print:items-center print:justify-center print:page-break-after-always">
-              <div className="text-center mb-8">
-                <h1 className="text-5xl font-serif font-bold text-brand-olive mb-4">Bibliothèque de Contes</h1>
-                <h2 className="text-3xl font-serif text-brand-ink">Tome {story.tomeNumber}</h2>
-                <h3 className="text-4xl font-serif font-bold text-brand-ink mt-4">{data.title}</h3>
-              </div>
-
-              {story.imageUrl && (
-                <img 
-                  src={story.imageUrl} 
-                  alt="Illustration de couverture" 
-                  className="w-full max-w-2xl h-auto rounded-2xl shadow-md border border-brand-olive/20 print:shadow-none print:border-none"
-                />
-              )}
-            </div>
-
-            {/* Séquences */}
-            {data.chapters.map((chapter, index) => (
-              <div key={index} className="print:page-break-after-always print:min-h-screen print:py-12">
-                <h3 className="text-3xl font-serif font-bold text-brand-olive mb-6 print:hidden">
-                  {chapter.title}
-                </h3>
-                
-                {chapter.imageUrl && (
-                  <img 
-                    src={chapter.imageUrl} 
-                    alt={`Illustration Séquence ${chapter.chapterNumber}`} 
-                    className="w-full h-auto rounded-2xl shadow-md border border-brand-olive/20 mb-8 print:shadow-none print:border-none print:rounded-none print:mb-4"
-                  />
-                )}
-
-                <div className="prose prose-stone prose-lg max-w-none font-serif text-brand-ink leading-relaxed print:text-black print:prose-p:leading-normal print:prose-p:mb-4 print:bg-[#fcf8f2] print:p-8 print:rounded-xl print:border-2 print:border-brand-olive/30 print:shadow-[4px_4px_0px_rgba(90,90,64,0.2)]">
-                  <Markdown>{chapter.content}</Markdown>
-                </div>
-              </div>
-            ))}
-
-            {/* Lexique */}
-            {data.lexicon && data.lexicon.length > 0 && (
-              <div className="mt-16 print:page-break-before-always print:py-12">
-                <h3 className="text-3xl font-serif font-bold text-brand-olive mb-6">Lexique</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {data.lexicon.map((item, index) => (
-                    <div key={index} className="bg-brand-bg p-4 rounded-xl border border-brand-olive/10">
-                      <span className="font-bold text-brand-ink">{item.word}</span>
-                      <span className="text-brand-olive mx-2">→</span>
-                      <span className="text-brand-ink/80">{item.translation}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      } catch (e) {
-        console.error("Failed to parse structured story", e);
-        return <p>Erreur de lecture du tome.</p>;
+        const imported = JSON.parse(ev.target?.result as string);
+        if (!Array.isArray(imported)) throw new Error('Format invalide');
+        const existingIds = new Set(stories.map(s => s.id));
+        const newStories = imported.filter((s: Story) => !existingIds.has(s.id));
+        const merged = [...newStories, ...stories];
+        setStories(merged);
+        localStorage.setItem('gardiens_stories', JSON.stringify(merged));
+        alert(`${newStories.length} tome(s) importé(s) avec succès !`);
+      } catch {
+        alert("Erreur lors de l'importation. Vérifiez le format du fichier.");
       }
-    }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
-    // Fallback for old unstructured stories
-    return (
-      <div className="prose prose-stone prose-lg max-w-none font-serif prose-headings:font-serif prose-headings:text-brand-olive prose-a:text-brand-olive">
-        {story.imageUrl && (
-          <div className="mb-8 flex justify-center">
-            <img 
-              src={story.imageUrl} 
-              alt="Illustration" 
-              className="max-w-xs w-full h-auto rounded-2xl shadow-sm border border-brand-olive/20"
-            />
-          </div>
-        )}
-        <Markdown>{story.content}</Markdown>
-      </div>
-    );
+  const getStoryData = (story: Story): StoryData | null => {
+    if (!story.isStructured) return null;
+    try {
+      return JSON.parse(story.content);
+    } catch {
+      return null;
+    }
   };
 
   return (
@@ -150,8 +103,26 @@ export function Library() {
           La Bibliothèque
         </h1>
         <p className="text-xl text-brand-ink/70 font-light max-w-2xl mx-auto">
-          Retrouvez toutes les aventures générées des Gardiens de Nkonté.
+          Retrouvez toutes les aventures générées des Gardiens de la Terre.
         </p>
+        {/* Export / Import */}
+        {stories.length > 0 && (
+          <div className="flex justify-center gap-3 pt-2">
+            <button
+              onClick={handleExportAll}
+              className="flex items-center gap-2 bg-white text-brand-olive px-4 py-2 rounded-full font-medium hover:bg-brand-olive/10 transition-colors border border-brand-olive/20 text-sm"
+            >
+              <Download size={16} /> Exporter tout
+            </button>
+            <button
+              onClick={() => importRef.current?.click()}
+              className="flex items-center gap-2 bg-white text-brand-olive px-4 py-2 rounded-full font-medium hover:bg-brand-olive/10 transition-colors border border-brand-olive/20 text-sm"
+            >
+              <Upload size={16} /> Importer
+            </button>
+            <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+          </div>
+        )}
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 min-h-0 print:block print:gap-0">
@@ -162,14 +133,23 @@ export function Library() {
                 <Book size={20} />
               </div>
               Tomes Sauvegardés
+              <span className="text-sm font-mono text-brand-ink/40 font-normal ml-auto">{stories.length}</span>
             </h2>
           </div>
-          
+
           <div className="overflow-y-auto flex-1 p-4 space-y-3">
             {stories.length === 0 ? (
-              <p className="text-center text-brand-olive-light italic p-4">
-                Aucun tome sauvegardé pour le moment.
-              </p>
+              <div className="text-center p-8">
+                <p className="text-brand-olive-light italic mb-4">
+                  Aucun tome sauvegardé pour le moment.
+                </p>
+                <button
+                  onClick={() => importRef.current?.click()}
+                  className="text-brand-olive text-sm font-medium underline"
+                >
+                  Importer des histoires
+                </button>
+              </div>
             ) : (
               stories.map((story) => (
                 <button
@@ -230,20 +210,55 @@ export function Library() {
                 {selectedStory.isStructured && (
                   <PDFDownloadLink
                     document={<BookPDF story={JSON.parse(selectedStory.content)} tomeNumber={selectedStory.tomeNumber} groupImage={selectedStory.imageUrl || null} />}
-                    fileName={`Les_Gardiens_de_Nkonte_Tome_${selectedStory.tomeNumber}.pdf`}
+                    fileName={`Les_Gardiens_Tome_${selectedStory.tomeNumber}.pdf`}
                     className="flex items-center gap-2 bg-white text-brand-olive px-4 py-2 rounded-full font-medium hover:bg-brand-olive/10 transition-colors border border-brand-olive/20"
                   >
                     {({ loading }) => (
                       <>
                         {loading ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
-                        {loading ? 'Préparation PDF...' : 'Télécharger PDF'}
+                        {loading ? 'PDF...' : 'Télécharger PDF'}
                       </>
                     )}
                   </PDFDownloadLink>
                 )}
               </div>
               <div className="p-8 overflow-y-auto flex-1 print:p-0 print:overflow-visible">
-                {renderStoryContent(selectedStory)}
+                {(() => {
+                  const data = getStoryData(selectedStory);
+                  if (data) {
+                    return (
+                      <div>
+                        {selectedStory.imageUrl && (
+                          <img
+                            src={selectedStory.imageUrl}
+                            alt="Illustration de couverture"
+                            className="w-full max-w-2xl h-auto rounded-2xl shadow-md border border-brand-olive/20 mb-8 print:shadow-none print:border-none"
+                          />
+                        )}
+                        <StoryReader
+                          story={data}
+                          tomeNumber={selectedStory.tomeNumber}
+                          editable={false}
+                        />
+                      </div>
+                    );
+                  }
+                  // Fallback for old unstructured stories
+                  return (
+                    <div className="prose prose-stone prose-lg max-w-none font-serif prose-headings:font-serif prose-headings:text-brand-olive prose-a:text-brand-olive">
+                      {selectedStory.imageUrl && (
+                        <div className="mb-8 flex justify-center">
+                          <img
+                            src={selectedStory.imageUrl}
+                            alt="Illustration"
+                            className="max-w-xs w-full h-auto rounded-2xl shadow-sm border border-brand-olive/20"
+                          />
+                        </div>
+                      )}
+                      <div dangerouslySetInnerHTML={{ __html: selectedStory.content }} />
+                    </div>
+                  );
+                })()}
               </div>
             </>
           ) : (

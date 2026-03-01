@@ -7,6 +7,7 @@ import { Characters } from './pages/Characters';
 import { World } from './pages/World';
 import { Generator } from './pages/Generator';
 import { Library } from './pages/Library';
+import { Dictionary } from './pages/Dictionary';
 import { getProviderConfig } from './services/ai-provider';
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/univers" element={<World />} />
             <Route path="/generateur" element={<Generator />} />
             <Route path="/bibliotheque" element={<Library />} />
+            <Route path="/dictionnaire" element={<Dictionary />} />
           </Routes>
         </main>
       </div>

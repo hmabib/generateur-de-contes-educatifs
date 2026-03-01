@@ -3,9 +3,13 @@ import { getProviderConfig } from "./ai-provider";
 
 function getAiInstance() {
   const config = getProviderConfig();
-  const apiKey = config?.apiKey || process.env.API_KEY || process.env.GEMINI_API_KEY || '';
+  const apiKey = config?.apiKey || '';
   return new GoogleGenAI({ apiKey });
 }
+
+// Modèles Gemini
+const TEXT_MODEL = "gemini-2.5-flash-preview-05-20";
+const IMAGE_MODEL = "gemini-3.1-flash-image-preview";
 
 export async function generateStructuredStory(params: {
   tomeNumber: string;
@@ -20,101 +24,142 @@ export async function generateStructuredStory(params: {
   guestStyle: string;
   ageRange: string;
   recurrentCharacters: any[];
+  chapterCount?: number;
+  writingStyle?: string;
+  country?: string;
+  includeLexicon?: boolean;
+  lexiconLanguage?: string;
+  lexiconWordCount?: number;
 }) {
   const charactersList = params.recurrentCharacters.map(c =>
     `- ${c.name} (${c.archetype}, ${c.signature}, langue: ${c.language}) : ${c.description}`
   ).join('\n');
 
-  const prompt = `Tu es un auteur de litt\u00e9rature jeunesse africaine sp\u00e9cialis\u00e9 dans les
-contes \u00e9ducatifs pour enfants. Tu travailles sur la s\u00e9rie
-"Les Gardiens de Nkont\u00e9" qui se d\u00e9roule au Cameroun dans le village fictif
-de Nkont\u00e9.
+  const chapterCount = params.chapterCount || 5;
+  const country = params.country || 'Cameroun';
+  const writingStyle = params.writingStyle || 'Narratif classique';
+  const includeLexicon = params.includeLexicon !== false;
 
-Les personnages r\u00e9currents de la s\u00e9rie (qui DOIVENT TOUS appara\u00eetre et jouer un r\u00f4le) sont :
+  let styleInstruction = '';
+  switch (writingStyle) {
+    case 'Poétique':
+      styleInstruction = 'Utilise un style poétique et lyrique, avec des métaphores, des rimes occasionnelles et un rythme musical dans les phrases.';
+      break;
+    case 'Dialogue riche':
+      styleInstruction = 'Privilégie les dialogues entre personnages. Au moins 50% du texte doit être des échanges parlés vivants et expressifs.';
+      break;
+    default:
+      styleInstruction = 'Utilise un style narratif classique, fluide et immersif, adapté aux enfants.';
+  }
+
+  let lexiconInstruction = '';
+  if (includeLexicon) {
+    const lang = params.lexiconLanguage ? `en ${params.lexiconLanguage}` : 'dans les langues africaines locales du contexte';
+    const count = params.lexiconWordCount || 8;
+    lexiconInstruction = `\nIntègre naturellement des mots ${lang} dans le texte avec traduction entre parenthèses. Fournis un lexique de ${count} à ${count + 4} mots ${lang} utilisés dans l'histoire.`;
+  }
+
+  const prompt = `Tu es un auteur de littérature jeunesse africaine spécialisé dans les contes éducatifs pour enfants. Tu travailles sur la série "Les Gardiens de la Terre" qui se déroule en ${country}.
+
+Les personnages récurrents de la série (qui DOIVENT TOUS apparaître et jouer un rôle) sont :
 ${charactersList}
 
-Le personnage invit\u00e9 de ce tome :
+Le personnage invité de ce tome :
 - ${params.guestName} (Description : ${params.guestStyle})
 
-OBJECTIF : \u00c9cris le Tome ${params.tomeNumber} de la s\u00e9rie. L'id\u00e9e de d\u00e9part ou le th\u00e8me est "${params.title}". Tu dois G\u00c9N\u00c9RER UN TITRE FINAL ACCROCHEUR qui s'adapte parfaitement au contenu de l'histoire que tu vas cr\u00e9er. Il s'agit d'un LIVRE COMPLET.
+OBJECTIF : Écris le Tome ${params.tomeNumber} de la série. L'idée de départ ou le thème est "${params.title}". Tu dois GÉNÉRER UN TITRE FINAL ACCROCHEUR qui s'adapte parfaitement au contenu de l'histoire que tu vas créer. Il s'agit d'un LIVRE COMPLET.
 
-TRANCHE D'\u00c2GE CIBLE : ${params.ageRange} (Adapte le vocabulaire, la complexit\u00e9 des phrases et la profondeur des th\u00e8mes \u00e0 cet \u00e2ge)
+TRANCHE D'ÂGE CIBLE : ${params.ageRange} (Adapte le vocabulaire, la complexité des phrases et la profondeur des thèmes à cet âge)
 UNIVERS / LIEU DE L'ACTION : ${params.universe}
-TH\u00c8ME CENTRAL : ${params.theme}
-\u00c9L\u00c9MENT NATUREL MENAC\u00c9 : ${params.threatenedElement}
-COMP\u00c9TENCE MISE EN AVANT : ${params.focusCharacter}
-VALEUR \u00c9DUCATIVE PRINCIPALE : ${params.educationalValue}
+THÈME CENTRAL : ${params.theme}
+ÉLÉMENT NATUREL MENACÉ : ${params.threatenedElement}
+COMPÉTENCE MISE EN AVANT : ${params.focusCharacter}
+VALEUR ÉDUCATIVE PRINCIPALE : ${params.educationalValue}
 SECRET PHILOSOPHIQUE FINAL : "${params.secret}"
+PAYS / CONTEXTE CULTUREL : ${country}
+
+STYLE D'ÉCRITURE : ${styleInstruction}
 
 CONTRAINTES DE STYLE :
-- L'histoire doit \u00eatre une s\u00e9quence continue du d\u00e9but \u00e0 la fin, SANS mentionner le mot "Chapitre" ni "Tome".
-- Assure-toi surtout que l'histoire suit un fil conducteur clair et une logique coh\u00e9rente de la premi\u00e8re \u00e0 la derni\u00e8re ligne.
-- R\u00e9dige un r\u00e9cit authentique, naturel et de haute qualit\u00e9.
-- Int\u00e8gre les traits et signatures des personnages de mani\u00e8re tr\u00e8s subtile et fluide, sans forcer le trait ni faire de focus excessif dessus.
-- Phrases courtes, langage accessible pour la tranche d'\u00e2ge ${params.ageRange}.
-- Mots en langues africaines avec traduction entre parenth\u00e8ses.
-- Longueur : Le plus long et d\u00e9taill\u00e9 possible pour faire un vrai petit livre (environ 300 \u00e0 400 mots par s\u00e9quence).
+- L'histoire doit être une séquence continue du début à la fin, SANS mentionner le mot "Chapitre" ni "Tome".
+- Assure-toi surtout que l'histoire suit un fil conducteur clair et une logique cohérente de la première à la dernière ligne.
+- Rédige un récit authentique, naturel et de haute qualité.
+- Intègre les traits et signatures des personnages de manière très subtile et fluide, sans forcer le trait ni faire de focus excessif dessus.
+- Phrases courtes, langage accessible pour la tranche d'âge ${params.ageRange}.${lexiconInstruction}
+- Longueur : Le plus long et détaillé possible pour faire un vrai petit livre (environ 300 à 400 mots par séquence).
 
-G\u00e9n\u00e8re le livre au format JSON strict. Divise l'histoire en 5 s\u00e9quences logiques (utilise le tableau "chapters" dans le JSON pour ces s\u00e9quences, mais n'utilise pas le mot "chapitre" dans le texte). Pour chaque s\u00e9quence, fournis une description visuelle d\u00e9taill\u00e9e (imagePrompt) qui servira \u00e0 g\u00e9n\u00e9rer une illustration. L'imagePrompt doit d\u00e9crire l'action, le d\u00e9cor africain, et pr\u00e9ciser quels personnages sont pr\u00e9sents, SANS mentionner de num\u00e9ro de chapitre ou de tome et SANS demander de texte sur l'image.`;
+Génère le livre au format JSON strict. Divise l'histoire en ${chapterCount} séquences logiques (utilise le tableau "chapters" dans le JSON pour ces séquences, mais n'utilise pas le mot "chapitre" dans le texte). Pour chaque séquence, fournis une description visuelle détaillée (imagePrompt) qui servira à générer une illustration. L'imagePrompt doit décrire l'action, le décor africain, et préciser quels personnages sont présents, SANS mentionner de numéro de chapitre ou de tome et SANS demander de texte sur l'image.`;
+
+  const schemaProperties: any = {
+    title: { type: Type.STRING },
+    chapters: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          chapterNumber: { type: Type.INTEGER },
+          title: { type: Type.STRING },
+          content: { type: Type.STRING },
+          imagePrompt: { type: Type.STRING }
+        },
+        required: ["chapterNumber", "title", "content", "imagePrompt"]
+      }
+    },
+  };
+
+  const requiredFields = ["title", "chapters"];
+
+  if (includeLexicon) {
+    schemaProperties.lexicon = {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          word: { type: Type.STRING },
+          translation: { type: Type.STRING }
+        },
+        required: ["word", "translation"]
+      }
+    };
+    requiredFields.push("lexicon");
+  }
 
   const response = await getAiInstance().models.generateContent({
-    model: "gemini-3.1-pro-preview",
+    model: TEXT_MODEL,
     contents: prompt,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
-        properties: {
-          title: { type: Type.STRING },
-          chapters: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                chapterNumber: { type: Type.INTEGER },
-                title: { type: Type.STRING },
-                content: { type: Type.STRING },
-                imagePrompt: { type: Type.STRING }
-              },
-              required: ["chapterNumber", "title", "content", "imagePrompt"]
-            }
-          },
-          lexicon: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                word: { type: Type.STRING },
-                translation: { type: Type.STRING }
-              },
-              required: ["word", "translation"]
-            }
-          }
-        },
-        required: ["title", "chapters", "lexicon"]
+        properties: schemaProperties,
+        required: requiredFields
       }
     }
   });
 
-  return JSON.parse(response.text || "{}");
+  const result = JSON.parse(response.text || "{}");
+  if (!result.lexicon) {
+    result.lexicon = [];
+  }
+  return result;
 }
 
 export async function generateCharacterProfile(promptText: string) {
-  const prompt = `Cr\u00e9e un nouveau personnage r\u00e9current pour la s\u00e9rie de livres pour enfants "Les Gardiens de Nkont\u00e9" (Cameroun).
-Le personnage doit s'int\u00e9grer au groupe d'enfants existant.
+  const prompt = `Crée un nouveau personnage récurrent pour la série de livres pour enfants "Les Gardiens de la Terre" (Afrique).
+Le personnage doit s'intégrer au groupe d'enfants existant.
 Voici les directives de l'utilisateur : ${promptText}
 
-G\u00e9n\u00e8re un profil au format JSON avec les propri\u00e9t\u00e9s suivantes :
-- name (pr\u00e9nom)
-- origin (r\u00e9gion ou pays d'origine)
-- language (langue parl\u00e9e, ex: Bamil\u00e9k\u00e9, Beti, etc.)
-- archetype (son r\u00f4le dans le groupe, ex: "Le Bricoleur")
-- signature (sa particularit\u00e9 visuelle ou comportementale)
-- description (2 phrases sur sa personnalit\u00e9 et son utilit\u00e9 dans le groupe)
-- imagePrompt (une description visuelle d\u00e9taill\u00e9e pour g\u00e9n\u00e9rer son image en style dessin anim\u00e9 2D africain)`;
+Génère un profil au format JSON avec les propriétés suivantes :
+- name (prénom)
+- origin (région ou pays d'origine)
+- language (langue parlée, ex: Bamiléké, Beti, Wolof, etc.)
+- archetype (son rôle dans le groupe, ex: "Le Bricoleur")
+- signature (sa particularité visuelle ou comportementale)
+- description (2 phrases sur sa personnalité et son utilité dans le groupe)
+- imagePrompt (une description visuelle détaillée pour générer son image en style dessin animé 2D africain)`;
 
   const response = await getAiInstance().models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: TEXT_MODEL,
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -143,12 +188,12 @@ export async function generateCharacterImage(
   base64Image?: string,
   mimeType?: string
 ) {
-  const prompt = `Illustration pour un livre d'enfants africain (6-12 ans). Un personnage nomm\u00e9 ${guestName}. Description et style : ${guestStyle}. Le style artistique doit \u00eatre 2D, color\u00e9, chaleureux, dessin\u00e9 \u00e0 la main, dans l'esprit d'un conte africain. Fond simple blanc.`;
+  const prompt = `Illustration pour un livre d'enfants africain (6-12 ans). Un personnage nommé ${guestName}. Description et style : ${guestStyle}. Le style artistique doit être 2D, coloré, chaleureux, dessiné à la main, dans l'esprit d'un conte africain. Fond simple blanc.`;
 
   const parts: any[] = [];
   if (base64Image && mimeType) {
     const base64Data = base64Image.split(',')[1];
-    parts.push({ text: "Utilise cette image comme r\u00e9f\u00e9rence stricte pour le personnage (garde les m\u00eames traits, v\u00eatements et style) : " + prompt });
+    parts.push({ text: "Utilise cette image comme référence stricte pour le personnage (garde les mêmes traits, vêtements et style) : " + prompt });
     parts.push({
       inlineData: {
         data: base64Data,
@@ -160,12 +205,13 @@ export async function generateCharacterImage(
   }
 
   const response = await getAiInstance().models.generateContent({
-    model: 'gemini-3.1-flash-image-preview',
+    model: IMAGE_MODEL,
     contents: { parts },
     config: {
+      responseModalities: ['TEXT', 'IMAGE'],
       imageConfig: {
-        aspectRatio: "1:1"
-      }
+        aspectRatio: '1:1',
+      },
     }
   });
 
@@ -174,14 +220,14 @@ export async function generateCharacterImage(
       return `data:image/png;base64,${part.inlineData.data}`;
     }
   }
-  throw new Error("Aucune image g\u00e9n\u00e9r\u00e9e");
+  throw new Error("Aucune image générée");
 }
 
 export async function generateChapterImage(
   promptText: string,
   referenceImages: { data: string; mimeType: string }[]
 ) {
-  const parts: any[] = [{ text: `G\u00e9n\u00e8re une illustration en utilisant STRICTEMENT les personnages fournis en images de r\u00e9f\u00e9rence. Ils doivent garder EXACTEMENT le m\u00eame style, les m\u00eames visages, les m\u00eames v\u00eatements et les m\u00eames couleurs. Voici la sc\u00e8ne \u00e0 illustrer : ${promptText}` }];
+  const parts: any[] = [{ text: `Génère une illustration en utilisant STRICTEMENT les personnages fournis en images de référence. Ils doivent garder EXACTEMENT le même style, les mêmes visages, les mêmes vêtements et les mêmes couleurs. Voici la scène à illustrer : ${promptText}` }];
 
   for (const ref of referenceImages) {
     parts.push({
@@ -193,12 +239,13 @@ export async function generateChapterImage(
   }
 
   const response = await getAiInstance().models.generateContent({
-    model: 'gemini-3.1-flash-image-preview',
+    model: IMAGE_MODEL,
     contents: { parts },
     config: {
+      responseModalities: ['TEXT', 'IMAGE'],
       imageConfig: {
-        aspectRatio: "16:9"
-      }
+        aspectRatio: '1:1',
+      },
     }
   });
 
@@ -207,5 +254,5 @@ export async function generateChapterImage(
       return `data:image/png;base64,${part.inlineData.data}`;
     }
   }
-  throw new Error("Aucune image g\u00e9n\u00e9r\u00e9e");
+  throw new Error("Aucune image générée");
 }

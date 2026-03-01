@@ -5,7 +5,7 @@ const OPENROUTER_BASE = "https://openrouter.ai/api/v1/chat/completions";
 async function callOpenRouter(messages: { role: string; content: string }[], jsonMode = false) {
   const config = getProviderConfig();
   if (!config || config.provider !== 'openrouter') {
-    throw new Error("OpenRouter non configur\u00e9");
+    throw new Error("OpenRouter non configuré");
   }
 
   const body: any = {
@@ -23,7 +23,7 @@ async function callOpenRouter(messages: { role: string; content: string }[], jso
       "Authorization": `Bearer ${config.apiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": window.location.origin,
-      "X-Title": "G\u00e9n\u00e9rateur de Contes \u00c9ducatifs",
+      "X-Title": "Les Gardiens de la Terre",
     },
     body: JSON.stringify(body),
   });
@@ -50,95 +50,131 @@ export async function generateStructuredStoryOpenRouter(params: {
   guestStyle: string;
   ageRange: string;
   recurrentCharacters: any[];
+  chapterCount?: number;
+  writingStyle?: string;
+  country?: string;
+  includeLexicon?: boolean;
+  lexiconLanguage?: string;
+  lexiconWordCount?: number;
 }) {
   const charactersList = params.recurrentCharacters.map(c =>
     `- ${c.name} (${c.archetype}, ${c.signature}, langue: ${c.language}) : ${c.description}`
   ).join('\n');
 
-  const prompt = `Tu es un auteur de litt\u00e9rature jeunesse africaine sp\u00e9cialis\u00e9 dans les
-contes \u00e9ducatifs pour enfants. Tu travailles sur la s\u00e9rie
-"Les Gardiens de Nkont\u00e9" qui se d\u00e9roule au Cameroun dans le village fictif
-de Nkont\u00e9.
+  const chapterCount = params.chapterCount || 5;
+  const country = params.country || 'Cameroun';
+  const writingStyle = params.writingStyle || 'Narratif classique';
+  const includeLexicon = params.includeLexicon !== false;
 
-Les personnages r\u00e9currents de la s\u00e9rie (qui DOIVENT TOUS appara\u00eetre et jouer un r\u00f4le) sont :
+  let styleInstruction = '';
+  switch (writingStyle) {
+    case 'Poétique':
+      styleInstruction = 'Utilise un style poétique et lyrique, avec des métaphores, des rimes occasionnelles et un rythme musical dans les phrases.';
+      break;
+    case 'Dialogue riche':
+      styleInstruction = 'Privilégie les dialogues entre personnages. Au moins 50% du texte doit être des échanges parlés vivants et expressifs.';
+      break;
+    default:
+      styleInstruction = 'Utilise un style narratif classique, fluide et immersif, adapté aux enfants.';
+  }
+
+  let lexiconInstruction = '';
+  let lexiconJsonInstruction = '';
+  if (includeLexicon) {
+    const lang = params.lexiconLanguage ? `en ${params.lexiconLanguage}` : 'dans les langues africaines locales du contexte';
+    const count = params.lexiconWordCount || 8;
+    lexiconInstruction = `\nIntègre naturellement des mots ${lang} dans le texte avec traduction entre parenthèses.`;
+    lexiconJsonInstruction = `,
+  "lexicon": [
+    { "word": "mot africain", "translation": "traduction" }
+  ]
+
+Fournis un lexique de ${count} à ${count + 4} mots ${lang} utilisés dans l'histoire.`;
+  }
+
+  const prompt = `Tu es un auteur de littérature jeunesse africaine spécialisé dans les contes éducatifs pour enfants. Tu travailles sur la série "Les Gardiens de la Terre" qui se déroule en ${country}.
+
+Les personnages récurrents de la série (qui DOIVENT TOUS apparaître et jouer un rôle) sont :
 ${charactersList}
 
-Le personnage invit\u00e9 de ce tome :
+Le personnage invité de ce tome :
 - ${params.guestName} (Description : ${params.guestStyle})
 
-OBJECTIF : \u00c9cris le Tome ${params.tomeNumber} de la s\u00e9rie. L'id\u00e9e de d\u00e9part ou le th\u00e8me est "${params.title}". Tu dois G\u00c9N\u00c9RER UN TITRE FINAL ACCROCHEUR qui s'adapte parfaitement au contenu de l'histoire que tu vas cr\u00e9er. Il s'agit d'un LIVRE COMPLET.
+OBJECTIF : Écris le Tome ${params.tomeNumber} de la série. L'idée de départ ou le thème est "${params.title}". Tu dois GÉNÉRER UN TITRE FINAL ACCROCHEUR qui s'adapte parfaitement au contenu de l'histoire que tu vas créer. Il s'agit d'un LIVRE COMPLET.
 
-TRANCHE D'\u00c2GE CIBLE : ${params.ageRange} (Adapte le vocabulaire, la complexit\u00e9 des phrases et la profondeur des th\u00e8mes \u00e0 cet \u00e2ge)
+TRANCHE D'ÂGE CIBLE : ${params.ageRange}
 UNIVERS / LIEU DE L'ACTION : ${params.universe}
-TH\u00c8ME CENTRAL : ${params.theme}
-\u00c9L\u00c9MENT NATUREL MENAC\u00c9 : ${params.threatenedElement}
-COMP\u00c9TENCE MISE EN AVANT : ${params.focusCharacter}
-VALEUR \u00c9DUCATIVE PRINCIPALE : ${params.educationalValue}
+THÈME CENTRAL : ${params.theme}
+ÉLÉMENT NATUREL MENACÉ : ${params.threatenedElement}
+COMPÉTENCE MISE EN AVANT : ${params.focusCharacter}
+VALEUR ÉDUCATIVE PRINCIPALE : ${params.educationalValue}
 SECRET PHILOSOPHIQUE FINAL : "${params.secret}"
+PAYS / CONTEXTE CULTUREL : ${country}
+
+STYLE D'ÉCRITURE : ${styleInstruction}
 
 CONTRAINTES DE STYLE :
-- L'histoire doit \u00eatre une s\u00e9quence continue du d\u00e9but \u00e0 la fin, SANS mentionner le mot "Chapitre" ni "Tome".
-- Assure-toi surtout que l'histoire suit un fil conducteur clair et une logique coh\u00e9rente de la premi\u00e8re \u00e0 la derni\u00e8re ligne.
-- R\u00e9dige un r\u00e9cit authentique, naturel et de haute qualit\u00e9.
-- Int\u00e8gre les traits et signatures des personnages de mani\u00e8re tr\u00e8s subtile et fluide, sans forcer le trait ni faire de focus excessif dessus.
-- Phrases courtes, langage accessible pour la tranche d'\u00e2ge ${params.ageRange}.
-- Mots en langues africaines avec traduction entre parenth\u00e8ses.
-- Longueur : Le plus long et d\u00e9taill\u00e9 possible pour faire un vrai petit livre (environ 300 \u00e0 400 mots par s\u00e9quence).
+- L'histoire doit être une séquence continue du début à la fin, SANS mentionner le mot "Chapitre" ni "Tome".
+- Rédige un récit authentique, naturel et de haute qualité.
+- Intègre les traits et signatures des personnages de manière très subtile et fluide.
+- Phrases courtes, langage accessible pour la tranche d'âge ${params.ageRange}.${lexiconInstruction}
+- Longueur : environ 300 à 400 mots par séquence.
 
-R\u00c9PONDS UNIQUEMENT EN JSON STRICT avec cette structure exacte (pas de texte avant ni apr\u00e8s) :
+RÉPONDS UNIQUEMENT EN JSON STRICT avec cette structure exacte :
 {
   "title": "Titre accrocheur du tome",
   "chapters": [
     {
       "chapterNumber": 1,
-      "title": "Titre de la s\u00e9quence",
-      "content": "Texte de la s\u00e9quence...",
-      "imagePrompt": "Description visuelle d\u00e9taill\u00e9e pour illustration"
+      "title": "Titre de la séquence",
+      "content": "Texte de la séquence...",
+      "imagePrompt": "Description visuelle détaillée pour illustration"
     }
-  ],
-  "lexicon": [
-    { "word": "mot africain", "translation": "traduction" }
-  ]
+  ]${lexiconJsonInstruction}
 }
 
-Divise l'histoire en 5 s\u00e9quences. Pour chaque s\u00e9quence, fournis une description visuelle d\u00e9taill\u00e9e (imagePrompt) d\u00e9crivant l'action, le d\u00e9cor africain, et les personnages pr\u00e9sents.`;
+Divise l'histoire en ${chapterCount} séquences.`;
 
   const messages = [
-    { role: "system", content: "Tu es un auteur de litt\u00e9rature jeunesse africaine. R\u00e9ponds uniquement en JSON valide." },
+    { role: "system", content: "Tu es un auteur de littérature jeunesse africaine. Réponds uniquement en JSON valide." },
     { role: "user", content: prompt }
   ];
 
   const text = await callOpenRouter(messages, true);
 
   try {
-    return JSON.parse(text);
+    const result = JSON.parse(text);
+    if (!result.lexicon) result.lexicon = [];
+    return result;
   } catch {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const result = JSON.parse(jsonMatch[0]);
+      if (!result.lexicon) result.lexicon = [];
+      return result;
     }
-    throw new Error("R\u00e9ponse JSON invalide du mod\u00e8le");
+    throw new Error("Réponse JSON invalide du modèle");
   }
 }
 
 export async function generateCharacterProfileOpenRouter(promptText: string) {
-  const prompt = `Cr\u00e9e un nouveau personnage r\u00e9current pour la s\u00e9rie de livres pour enfants "Les Gardiens de Nkont\u00e9" (Cameroun).
-Le personnage doit s'int\u00e9grer au groupe d'enfants existant.
+  const prompt = `Crée un nouveau personnage récurrent pour la série de livres pour enfants "Les Gardiens de la Terre" (Afrique).
+Le personnage doit s'intégrer au groupe d'enfants existant.
 Voici les directives de l'utilisateur : ${promptText}
 
-R\u00c9PONDS UNIQUEMENT EN JSON STRICT avec cette structure exacte :
+RÉPONDS UNIQUEMENT EN JSON STRICT avec cette structure exacte :
 {
-  "name": "pr\u00e9nom",
-  "origin": "r\u00e9gion ou pays d'origine",
-  "language": "langue parl\u00e9e",
-  "archetype": "r\u00f4le dans le groupe",
-  "signature": "particularit\u00e9 visuelle ou comportementale",
-  "description": "2 phrases sur sa personnalit\u00e9 et son utilit\u00e9 dans le groupe",
-  "imagePrompt": "description visuelle d\u00e9taill\u00e9e pour g\u00e9n\u00e9rer son image en style dessin anim\u00e9 2D africain"
+  "name": "prénom",
+  "origin": "région ou pays d'origine",
+  "language": "langue parlée",
+  "archetype": "rôle dans le groupe",
+  "signature": "particularité visuelle ou comportementale",
+  "description": "2 phrases sur sa personnalité et son utilité dans le groupe",
+  "imagePrompt": "description visuelle détaillée pour générer son image en style dessin animé 2D africain"
 }`;
 
   const messages = [
-    { role: "system", content: "Tu cr\u00e9es des personnages pour une s\u00e9rie de livres pour enfants africains. R\u00e9ponds uniquement en JSON valide." },
+    { role: "system", content: "Tu crées des personnages pour une série de livres pour enfants africains. Réponds uniquement en JSON valide." },
     { role: "user", content: prompt }
   ];
 
@@ -151,7 +187,7 @@ R\u00c9PONDS UNIQUEMENT EN JSON STRICT avec cette structure exacte :
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     }
-    throw new Error("R\u00e9ponse JSON invalide du mod\u00e8le");
+    throw new Error("Réponse JSON invalide du modèle");
   }
 }
 

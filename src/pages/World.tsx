@@ -35,10 +35,10 @@ export function World() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-brand-olive-light/20 rounded-full blur-3xl -z-10"></div>
         <div className="text-left">
           <h1 className="text-6xl font-bold font-serif text-transparent bg-clip-text bg-gradient-to-r from-brand-olive to-brand-olive-light pb-2">
-            L'Univers de Nkonté
+            Les Univers
           </h1>
           <p className="text-2xl text-brand-ink/70 font-light max-w-2xl mt-4 leading-relaxed">
-            Un village carrefour, un arbre sacré, et une nature qui respire.
+            Explorez les lieux emblématiques qui rythment les aventures des Gardiens.
           </p>
         </div>
         <button

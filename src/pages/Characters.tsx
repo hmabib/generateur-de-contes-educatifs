@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { getCharacters, saveCharacters, mentor, guestCharacterTemplate } from '../data/characters';
 import { getUniverses, saveUniverses } from '../data/universes';
-import { UserPlus, Upload, Plus, Pencil, Trash2, Map } from 'lucide-react';
+import { getGuestCharacters, deleteGuestCharacter, type GuestCharacter } from '../data/guestCharacters';
+import { UserPlus, Upload, Plus, Pencil, Trash2, Map, Star, Calendar } from 'lucide-react';
 import { get, set, del } from 'idb-keyval';
 
 function CharacterImage({ id, defaultImage, name, className }: { id: string, defaultImage: string, name: string, className?: string }) {
@@ -74,14 +75,23 @@ function CharacterImage({ id, defaultImage, name, className }: { id: string, def
 export function Characters() {
   const [characters, setCharactersList] = useState<any[]>([]);
   const [universes, setUniversesList] = useState<any[]>([]);
-  
+  const [guestChars, setGuestChars] = useState<GuestCharacter[]>([]);
+
   const [editingChar, setEditingChar] = useState<any | null>(null);
   const [editingUniverse, setEditingUniverse] = useState<any | null>(null);
 
   useEffect(() => {
     setCharactersList(getCharacters());
     setUniversesList(getUniverses());
+    setGuestChars(getGuestCharacters());
   }, []);
+
+  const handleDeleteGuest = (id: number) => {
+    if (confirm('Voulez-vous vraiment supprimer ce personnage invité ?')) {
+      deleteGuestCharacter(id);
+      setGuestChars(getGuestCharacters());
+    }
+  };
 
   const handleSaveChar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,6 +188,57 @@ export function Characters() {
             <p className="text-brand-ink/70 leading-relaxed text-lg">{guestCharacterTemplate.description}</p>
           </div>
         </motion.div>
+
+        {/* Saved Guest Characters */}
+        {guestChars.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-serif font-bold text-brand-ink flex items-center gap-2">
+              <Star className="text-brand-olive-light" size={20} />
+              Personnages Invités Sauvegardés
+              <span className="text-sm font-mono text-brand-ink/40 font-normal ml-2">{guestChars.length}</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {guestChars.map((guest, i) => (
+                <motion.div
+                  key={guest.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="bg-white p-5 rounded-2xl shadow-sm border border-brand-olive/10 hover:shadow-md transition-all duration-300 group/guest relative"
+                >
+                  <button
+                    onClick={() => handleDeleteGuest(guest.id)}
+                    className="absolute top-3 right-3 p-1.5 rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover/guest:opacity-100 transition-opacity"
+                    title="Supprimer"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                  <div className="flex items-start gap-4">
+                    {guest.referenceImage ? (
+                      <img
+                        src={guest.referenceImage}
+                        alt={guest.name}
+                        className="w-16 h-16 rounded-xl object-cover border border-brand-olive/20 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-xl bg-brand-olive/10 flex items-center justify-center text-brand-olive shrink-0">
+                        <UserPlus size={24} />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-serif font-bold text-brand-ink text-lg truncate">{guest.name}</h4>
+                      <p className="text-brand-ink/60 text-sm line-clamp-2 mt-1">{guest.style}</p>
+                      <p className="text-brand-ink/40 text-xs mt-2 flex items-center gap-1">
+                        <Calendar size={12} />
+                        {new Date(guest.createdAt).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {characters.map((char, i) => (

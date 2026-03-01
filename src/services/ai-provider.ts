@@ -33,10 +33,10 @@ export function supportsImageGeneration(): boolean {
 
 export const OPENROUTER_MODELS = [
   { id: 'google/gemini-2.5-flash-preview', label: 'Gemini 2.5 Flash (Rapide)' },
-  { id: 'google/gemini-2.5-pro-preview-03-25', label: 'Gemini 2.5 Pro (Qualit\u00e9)' },
+  { id: 'google/gemini-2.5-pro-preview-03-25', label: 'Gemini 2.5 Pro (Qualité)' },
   { id: 'anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
   { id: 'openai/gpt-4o', label: 'GPT-4o' },
-  { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini (Economique)' },
+  { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini (Économique)' },
   { id: 'meta-llama/llama-4-maverick', label: 'Llama 4 Maverick' },
 ];
 
