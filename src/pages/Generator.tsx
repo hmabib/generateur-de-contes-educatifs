@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { generateStructuredStory, generateCharacterImage, generateChapterImage, supportsImageGeneration } from '../services/ai';
-import { Loader2, Wand2, Save, BookOpen, ImagePlus, Image as ImageIcon, Printer, ChevronDown, ChevronUp, Star, UserCheck } from 'lucide-react';
+import { Loader2, Wand2, Save, BookOpen, ImagePlus, Image as ImageIcon, Printer, ChevronDown, ChevronUp, Star, UserCheck, FileText } from 'lucide-react';
 import { countryOptions, getCountryOptions } from '../data/generatorOptions';
 import { getCharacters } from '../data/characters';
 import { getUniverses } from '../data/universes';
@@ -10,6 +10,7 @@ import { getGuestCharacters, addGuestCharacter } from '../data/guestCharacters';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { BookPDF } from '../components/BookPDF';
 import { StoryReader } from '../components/StoryReader';
+import { exportToWord } from '../utils/exportWord';
 
 type Chapter = {
   chapterNumber: number;
@@ -43,6 +44,7 @@ export function Generator() {
   const [groupImage, setGroupImage] = useState<string | null>(null);
   const [progressMessage, setProgressMessage] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [exportingWord, setExportingWord] = useState(false);
 
   const [formData, setFormData] = useState({
     tomeNumber: '2',
@@ -330,6 +332,24 @@ export function Generator() {
 
   const handleStoryChange = (updatedStory: StoryData) => {
     setStory(updatedStory);
+  };
+
+  const handleExportWord = async () => {
+    if (!story) return;
+    setExportingWord(true);
+    try {
+      await exportToWord(
+        story,
+        formData.tomeNumber,
+        groupImage,
+        formData.lexiconLanguage || undefined
+      );
+    } catch (err) {
+      console.error('Erreur export Word:', err);
+      alert("Erreur lors de l'export Word.");
+    } finally {
+      setExportingWord(false);
+    }
   };
 
   // Filter options by selected country
@@ -816,6 +836,14 @@ export function Generator() {
                       </>
                     )}
                   </PDFDownloadLink>
+                  <button
+                    onClick={handleExportWord}
+                    disabled={exportingWord}
+                    className="flex items-center gap-2 bg-brand-bg text-blue-600 px-4 py-2 rounded-full font-medium hover:bg-blue-50 transition-colors border border-blue-200 text-sm disabled:opacity-50"
+                  >
+                    {exportingWord ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                    {exportingWord ? 'Word...' : 'Word'}
+                  </button>
                   <button
                     onClick={handleSave}
                     className="flex items-center gap-2 bg-brand-olive text-white px-4 py-2 rounded-full font-medium hover:bg-brand-olive-light transition-colors text-sm"

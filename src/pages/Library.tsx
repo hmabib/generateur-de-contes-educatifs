@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Book, Trash2, Printer, Loader2, Download, Upload } from 'lucide-react';
+import { Book, Trash2, Printer, Loader2, Download, Upload, FileText, Pencil, Eye } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { BookPDF } from '../components/BookPDF';
 import { StoryReader } from '../components/StoryReader';
+import { exportToWord } from '../utils/exportWord';
 
 interface Story {
   id: number;
@@ -31,6 +32,9 @@ type StoryData = {
 export function Library() {
   const [stories, setStories] = useState<Story[]>([]);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editedData, setEditedData] = useState<StoryData | null>(null);
+  const [exportingWord, setExportingWord] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -46,6 +50,8 @@ export function Library() {
       localStorage.setItem('gardiens_stories', JSON.stringify(updated));
       if (selectedStory?.id === id) {
         setSelectedStory(null);
+        setEditMode(false);
+        setEditedData(null);
       }
     }
   };
@@ -91,6 +97,83 @@ export function Library() {
       return null;
     }
   };
+
+  // Get the current story data (edited or original)
+  const getCurrentStoryData = (): StoryData | null => {
+    if (!selectedStory) return null;
+    if (editMode && editedData) return editedData;
+    return getStoryData(selectedStory);
+  };
+
+  // Start editing
+  const handleStartEdit = () => {
+    if (!selectedStory) return;
+    const data = getStoryData(selectedStory);
+    if (data) {
+      setEditedData(JSON.parse(JSON.stringify(data))); // deep clone
+      setEditMode(true);
+    }
+  };
+
+  // Save edits back to localStorage
+  const handleSaveEdits = () => {
+    if (!selectedStory || !editedData) return;
+    const updatedStory = {
+      ...selectedStory,
+      content: JSON.stringify(editedData),
+      title: editedData.title,
+    };
+    const updatedStories = stories.map(s =>
+      s.id === selectedStory.id ? updatedStory : s
+    );
+    setStories(updatedStories);
+    localStorage.setItem('gardiens_stories', JSON.stringify(updatedStories));
+    setSelectedStory(updatedStory);
+    setEditMode(false);
+    setEditedData(null);
+  };
+
+  // Cancel edits
+  const handleCancelEdit = () => {
+    setEditMode(false);
+    setEditedData(null);
+  };
+
+  // Handle story data change from StoryReader
+  const handleStoryChange = (newData: StoryData) => {
+    setEditedData(newData);
+  };
+
+  // Export to Word
+  const handleExportWord = async () => {
+    if (!selectedStory) return;
+    const data = getCurrentStoryData();
+    if (!data) return;
+
+    setExportingWord(true);
+    try {
+      await exportToWord(
+        data,
+        selectedStory.tomeNumber,
+        selectedStory.imageUrl || null,
+        selectedStory.lexiconLanguage
+      );
+    } catch (err) {
+      console.error('Erreur export Word:', err);
+      alert("Erreur lors de l'export Word.");
+    } finally {
+      setExportingWord(false);
+    }
+  };
+
+  // Select a story (reset edit mode)
+  const handleSelectStory = (story: Story) => {
+    setSelectedStory(story);
+    setEditMode(false);
+    setEditedData(null);
+  };
+
+  const currentData = getCurrentStoryData();
 
   return (
     <motion.div
@@ -155,7 +238,7 @@ export function Library() {
               stories.map((story) => (
                 <button
                   key={story.id}
-                  onClick={() => setSelectedStory(story)}
+                  onClick={() => handleSelectStory(story)}
                   className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 ${
                     selectedStory?.id === story.id
                       ? 'bg-gradient-to-r from-brand-olive to-brand-olive-light text-white border-transparent shadow-md shadow-brand-olive/20 scale-[1.02]'
@@ -199,33 +282,83 @@ export function Library() {
           {selectedStory ? (
             <>
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-olive to-brand-olive-light print:hidden"></div>
-              <div className="p-8 border-b border-brand-olive/10 bg-brand-bg/30 shrink-0 flex justify-between items-center print:hidden mt-2">
-                <div>
-                  <span className="text-sm font-bold text-brand-olive uppercase tracking-widest mb-2 block">
-                    Tome {selectedStory.tomeNumber}
-                  </span>
-                  <h2 className="text-4xl font-serif font-bold text-brand-ink">
-                    {selectedStory.title}
-                  </h2>
+              <div className="p-8 border-b border-brand-olive/10 bg-brand-bg/30 shrink-0 print:hidden mt-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-sm font-bold text-brand-olive uppercase tracking-widest mb-2 block">
+                      Tome {selectedStory.tomeNumber}
+                    </span>
+                    <h2 className="text-4xl font-serif font-bold text-brand-ink">
+                      {editMode && editedData ? editedData.title : selectedStory.title}
+                    </h2>
+                  </div>
+
+                  {/* Edit / View toggle */}
+                  {selectedStory.isStructured && (
+                    <div className="flex items-center gap-2">
+                      {editMode ? (
+                        <>
+                          <button
+                            onClick={handleSaveEdits}
+                            className="flex items-center gap-2 bg-brand-accent text-white px-4 py-2 rounded-full font-medium hover:bg-brand-accent/80 transition-colors text-sm"
+                          >
+                            Sauvegarder
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="flex items-center gap-2 bg-white text-brand-ink/60 px-4 py-2 rounded-full font-medium hover:bg-brand-bg transition-colors border border-brand-olive/20 text-sm"
+                          >
+                            Annuler
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={handleStartEdit}
+                          className="flex items-center gap-2 bg-white text-brand-olive px-4 py-2 rounded-full font-medium hover:bg-brand-olive/10 transition-colors border border-brand-olive/20 text-sm"
+                        >
+                          <Pencil size={16} />
+                          Modifier
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {selectedStory.isStructured && (
-                  <PDFDownloadLink
-                    document={<BookPDF story={JSON.parse(selectedStory.content)} tomeNumber={selectedStory.tomeNumber} groupImage={selectedStory.imageUrl || null} lexiconLanguage={selectedStory.lexiconLanguage} />}
-                    fileName={`Les_Gardiens_Tome_${selectedStory.tomeNumber}.pdf`}
-                    className="flex items-center gap-2 bg-white text-brand-olive px-4 py-2 rounded-full font-medium hover:bg-brand-olive/10 transition-colors border border-brand-olive/20"
-                  >
-                    {({ loading }) => (
-                      <>
-                        {loading ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
-                        {loading ? 'PDF...' : 'Télécharger PDF'}
-                      </>
+
+                {/* Export buttons */}
+                {selectedStory.isStructured && currentData && (
+                  <div className="flex gap-2 mt-4 flex-wrap">
+                    <PDFDownloadLink
+                      document={<BookPDF story={currentData} tomeNumber={selectedStory.tomeNumber} groupImage={selectedStory.imageUrl || null} lexiconLanguage={selectedStory.lexiconLanguage} />}
+                      fileName={`Les_Gardiens_Tome_${selectedStory.tomeNumber}.pdf`}
+                      className="flex items-center gap-2 bg-white text-brand-olive px-4 py-2 rounded-full font-medium hover:bg-brand-olive/10 transition-colors border border-brand-olive/20 text-sm"
+                    >
+                      {({ loading }) => (
+                        <>
+                          {loading ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
+                          {loading ? 'PDF...' : 'Exporter PDF'}
+                        </>
+                      )}
+                    </PDFDownloadLink>
+                    <button
+                      onClick={handleExportWord}
+                      disabled={exportingWord}
+                      className="flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-full font-medium hover:bg-blue-50 transition-colors border border-blue-200 text-sm disabled:opacity-50"
+                    >
+                      {exportingWord ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                      {exportingWord ? 'Word...' : 'Exporter Word'}
+                    </button>
+                    {editMode && (
+                      <span className="flex items-center gap-1 text-xs text-brand-accent font-medium px-3 py-1 bg-brand-accent/10 rounded-full">
+                        <Eye size={14} />
+                        Mode édition — Modifiez le texte puis exportez
+                      </span>
                     )}
-                  </PDFDownloadLink>
+                  </div>
                 )}
               </div>
               <div className="p-8 overflow-y-auto flex-1 print:p-0 print:overflow-visible">
                 {(() => {
-                  const data = getStoryData(selectedStory);
+                  const data = currentData;
                   if (data) {
                     return (
                       <div>
@@ -239,7 +372,8 @@ export function Library() {
                         <StoryReader
                           story={data}
                           tomeNumber={selectedStory.tomeNumber}
-                          editable={false}
+                          editable={editMode}
+                          onStoryChange={handleStoryChange}
                           lexiconLanguage={selectedStory.lexiconLanguage}
                         />
                       </div>
