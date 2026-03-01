@@ -89,7 +89,7 @@ CONTRAINTES DE STYLE :
 - Rédige un récit authentique, naturel et de haute qualité.
 - Intègre les traits et signatures des personnages de manière très subtile et fluide, sans forcer le trait ni faire de focus excessif dessus.
 - Phrases courtes, langage accessible pour la tranche d'âge ${params.ageRange}.${lexiconInstruction}
-- Longueur : Chaque séquence doit être LONGUE et DÉTAILLÉE, environ 500 à 700 mots par séquence minimum, avec des descriptions riches, des dialogues, et des détails sensoriels. C'est un vrai livre pour enfants.
+- Longueur : environ 270 mots par séquence maximum. Le texte doit tenir sur une demi-page paysage A4. Sois concis mais expressif, avec des descriptions vivantes et des dialogues courts.
 
 Génère le livre au format JSON strict. Divise l'histoire en ${chapterCount} séquences logiques (utilise le tableau "chapters" dans le JSON pour ces séquences, mais n'utilise pas le mot "chapitre" dans le texte). Pour chaque séquence, fournis une description visuelle détaillée (imagePrompt) qui servira à générer une illustration. L'imagePrompt doit décrire l'action, le décor africain, et préciser quels personnages sont présents, SANS mentionner de numéro de chapitre ou de tome et SANS demander de texte sur l'image.`;
 
@@ -213,7 +213,7 @@ export async function generateCharacterImage(
     config: {
       responseModalities: ['TEXT', 'IMAGE'],
       imageConfig: {
-        aspectRatio: '1:1',
+        aspectRatio: '9:16',
       },
     }
   });
@@ -247,7 +247,7 @@ export async function generateChapterImage(
     config: {
       responseModalities: ['TEXT', 'IMAGE'],
       imageConfig: {
-        aspectRatio: '1:1',
+        aspectRatio: '9:16',
       },
     }
   });
