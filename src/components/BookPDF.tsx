@@ -83,10 +83,12 @@ const s = StyleSheet.create({
     textAlign: 'center',
     textTransform: 'uppercase',
   },
-  coverEmoji: {
-    fontSize: 22,
-    textAlign: 'center',
-    marginBottom: 10,
+  coverDecoLine: {
+    width: 80,
+    height: 1.5,
+    backgroundColor: BRAND.accent,
+    marginBottom: 14,
+    opacity: 0.5,
   },
   coverTitle: {
     fontSize: 26,
@@ -152,47 +154,47 @@ const s = StyleSheet.create({
   textHalf: {
     width: HALF_WIDTH,
     height: '100%',
-    padding: 36,
-    paddingTop: 40,
-    paddingBottom: 50,
+    padding: 22,
+    paddingTop: 24,
+    paddingBottom: 44,
     flexDirection: 'column',
     justifyContent: 'flex-start',
     position: 'relative',
   },
   chapterTitleInText: {
-    fontSize: 18,
+    fontSize: 28,
     fontFamily: 'Serif',
     fontWeight: 'bold',
     color: BRAND.olive,
-    marginBottom: 6,
-    lineHeight: 1.3,
+    marginBottom: 4,
+    lineHeight: 1.25,
   },
   chapterSubLabel: {
-    fontSize: 9,
+    fontSize: 13,
     color: BRAND.accent,
     letterSpacing: 2,
-    marginBottom: 10,
+    marginBottom: 6,
     textTransform: 'uppercase',
   },
   chapterDecoLine: {
     width: 40,
     height: 2,
     backgroundColor: BRAND.oliveLight,
-    marginBottom: 14,
+    marginBottom: 10,
     opacity: 0.7,
   },
   paragraph: {
-    fontSize: 11,
-    lineHeight: 1.75,
+    fontSize: 22,
+    lineHeight: 1.45,
     color: BRAND.ink,
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'justify',
   },
   dialogueText: {
-    fontSize: 11,
-    lineHeight: 1.75,
+    fontSize: 22,
+    lineHeight: 1.45,
     color: '#5B6E4E',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'justify',
     fontStyle: 'italic',
   },
@@ -207,7 +209,7 @@ const s = StyleSheet.create({
     color: BRAND.accent,
   },
   dropCap: {
-    fontSize: 32,
+    fontSize: 52,
     fontFamily: 'Serif',
     fontWeight: 'bold',
     color: BRAND.olive,
@@ -217,16 +219,16 @@ const s = StyleSheet.create({
   // ─── Footer ───
   pageFooter: {
     position: 'absolute',
-    bottom: 16,
-    right: 36,
-    fontSize: 9,
+    bottom: 12,
+    right: 22,
+    fontSize: 10,
     color: BRAND.muted,
   },
   pageFooterLine: {
     position: 'absolute',
-    bottom: 30,
-    left: 36,
-    right: 36,
+    bottom: 26,
+    left: 22,
+    right: 22,
     height: 0.5,
     backgroundColor: BRAND.olive,
     opacity: 0.15,
@@ -319,7 +321,7 @@ function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
     if (trimmed.startsWith('#')) {
       const headerText = trimmed.replace(/^#+\s*/, '');
       return (
-        <Text key={pIndex} style={[s.paragraph, s.boldText, { fontSize: 13, marginBottom: 12 }]}>
+        <Text key={pIndex} style={[s.paragraph, s.boldText, { fontSize: 24, marginBottom: 10 }]}>
           {headerText}
         </Text>
       );
@@ -374,10 +376,10 @@ function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
   }).filter(Boolean);
 }
 
-// Chapter decorative emojis (rotate through these for variety)
-const CHAPTER_EMOJIS = ['🌿', '🦁', '🌍', '🌺', '✨', '🐘', '🌳', '🦜', '💧', '🌞', '🐢', '🌈', '🦋'];
-function getChapterEmoji(index: number): string {
-  return CHAPTER_EMOJIS[index % CHAPTER_EMOJIS.length];
+// Chapter decorative markers (text-based, no emojis)
+const CHAPTER_MARKERS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII'];
+function getChapterMarker(index: number): string {
+  return CHAPTER_MARKERS[index % CHAPTER_MARKERS.length];
 }
 
 type Chapter = {
@@ -427,11 +429,11 @@ export const BookPDF: React.FC<BookPDFProps> = ({ story, tomeNumber, groupImage,
       {/* Right half: title */}
       <View style={s.coverRight}>
         <View style={s.coverBorderDecor} />
-        <Text style={s.coverEmoji}>🌍 🌿 ✨</Text>
+        <View style={s.coverDecoLine} />
         <Text style={s.coverSeries}>Les Gardiens de la Terre</Text>
         <View style={s.coverDivider} />
         <Text style={s.coverTitle}>{story.title}</Text>
-        <Text style={s.coverSubtitle}>Contes Éducatifs Africains 🌱</Text>
+        <Text style={s.coverSubtitle}>Contes Educatifs Africains</Text>
       </View>
     </Page>
 
@@ -451,7 +453,7 @@ export const BookPDF: React.FC<BookPDFProps> = ({ story, tomeNumber, groupImage,
 
         {/* Right half: text */}
         <View style={s.textHalf} wrap>
-          <Text style={s.chapterSubLabel}>{getChapterEmoji(index)}  {index + 1} / {story.chapters.length}</Text>
+          <Text style={s.chapterSubLabel}>Chapitre {getChapterMarker(index)}  —  {index + 1} / {story.chapters.length}</Text>
           <Text style={s.chapterTitleInText}>{chapter.title}</Text>
           <View style={s.chapterDecoLine} />
           {renderMarkdownToPDF(chapter.content, index === 0)}
@@ -466,12 +468,12 @@ export const BookPDF: React.FC<BookPDFProps> = ({ story, tomeNumber, groupImage,
       <Page size={PAGE_SIZE} style={s.lexiconPage}>
         <View style={s.lexiconDecoLeft} />
         <View style={s.lexiconContent}>
-          <Text style={s.lexiconHeader}>📖  Vocabulaire</Text>
-          <Text style={s.lexiconTitle}>Lexique{lexiconLanguage ? ` — ${lexiconLanguage}` : ''} 🌍</Text>
+          <Text style={s.lexiconHeader}>Vocabulaire</Text>
+          <Text style={s.lexiconTitle}>Lexique{lexiconLanguage ? ` — ${lexiconLanguage}` : ''}</Text>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
             <View style={{ flex: 1, height: 0.5, backgroundColor: BRAND.olive, opacity: 0.3 }} />
-            <Text style={{ fontSize: 12, color: BRAND.olive, marginHorizontal: 10, opacity: 0.4 }}>✦</Text>
+            <Text style={{ fontSize: 12, color: BRAND.olive, marginHorizontal: 10, opacity: 0.4 }}>—</Text>
             <View style={{ flex: 1, height: 0.5, backgroundColor: BRAND.olive, opacity: 0.3 }} />
           </View>
 

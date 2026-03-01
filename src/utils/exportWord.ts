@@ -151,16 +151,16 @@ export async function exportToWord(
     children: [new TextRun({ text: '───────────', color: BRAND_OLIVE, size: 24, font: 'Georgia' })],
   }));
 
-  // Cover image
+  // Cover image — full page width, native 9:16 aspect ratio (no resize/distortion)
   if (groupImage) {
     const imgBuffer = await imageUrlToBuffer(groupImage);
     if (imgBuffer) {
       coverChildren.push(new Paragraph({
         alignment: AlignmentType.CENTER,
-        spacing: { after: 400 },
+        spacing: { after: 300 },
         children: [new ImageRun({
           data: imgBuffer,
-          transformation: { width: 400, height: 300 },
+          transformation: { width: 500, height: 889 },
           type: 'png',
         })],
       }));
@@ -244,7 +244,7 @@ export async function exportToWord(
       children: [new TextRun({ text: '', size: 4 })],
     }));
 
-    // Chapter image
+    // Chapter image — full page width, native 9:16 aspect ratio (no resize/distortion)
     if (chapter.imageUrl) {
       const imgBuffer = await imageUrlToBuffer(chapter.imageUrl);
       if (imgBuffer) {
@@ -253,7 +253,7 @@ export async function exportToWord(
           spacing: { after: 300 },
           children: [new ImageRun({
             data: imgBuffer,
-            transformation: { width: 450, height: 320 },
+            transformation: { width: 500, height: 889 },
             type: 'png',
           })],
         }));
