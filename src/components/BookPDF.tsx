@@ -1,7 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 
-// Register custom fonts for a children's book feel
+// Register custom fonts
 Font.register({
   family: 'Serif',
   fonts: [
@@ -17,122 +17,25 @@ const BRAND = {
   ink: '#2B2D42',
   accent: '#81B29A',
   bg: '#F8F6F1',
-  bgWarm: '#FCF8F2',
   white: '#FFFFFF',
   muted: '#8E9299',
 };
 
-const PAGE_SIZE = [842, 595]; // A4 landscape (width x height in points)
-const HALF_WIDTH = 421;
+// A4 portrait: 595 x 842 points
+const PAGE_W = 595;
+const PAGE_H = 842;
+
+const MARGIN = { top: 50, bottom: 50, left: 50, right: 50 };
+const CONTENT_W = PAGE_W - MARGIN.left - MARGIN.right; // 495pt
 
 const s = StyleSheet.create({
-  // ─── Cover ───
-  coverPage: {
-    flexDirection: 'row',
-    backgroundColor: BRAND.bg,
+  // ─── Full-bleed image page ───
+  imagePage: {
     width: '100%',
-    height: '100%',
-  },
-  coverLeft: {
-    width: HALF_WIDTH,
     height: '100%',
     backgroundColor: BRAND.ink,
-    overflow: 'hidden',
-    position: 'relative',
   },
-  coverImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  coverImageOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-    backgroundColor: BRAND.ink,
-    opacity: 0.4,
-  },
-  coverRight: {
-    width: HALF_WIDTH,
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-    backgroundColor: BRAND.bg,
-    position: 'relative',
-  },
-  coverBorderDecor: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    right: 16,
-    bottom: 16,
-    borderWidth: 1.5,
-    borderColor: BRAND.olive,
-    borderRadius: 6,
-    opacity: 0.3,
-  },
-  coverSeries: {
-    fontSize: 12,
-    color: BRAND.accent,
-    letterSpacing: 4,
-    marginBottom: 12,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-  },
-  coverDecoLine: {
-    width: 80,
-    height: 1.5,
-    backgroundColor: BRAND.accent,
-    marginBottom: 14,
-    opacity: 0.5,
-  },
-  coverTitle: {
-    fontSize: 26,
-    fontFamily: 'Serif',
-    fontWeight: 'bold',
-    color: BRAND.ink,
-    textAlign: 'center',
-    lineHeight: 1.4,
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
-  coverDivider: {
-    width: 60,
-    height: 2,
-    backgroundColor: BRAND.olive,
-    marginBottom: 20,
-    opacity: 0.6,
-  },
-  coverSubtitle: {
-    fontSize: 10,
-    color: BRAND.muted,
-    textAlign: 'center',
-    marginTop: 'auto',
-    position: 'absolute',
-    bottom: 30,
-    left: 40,
-    right: 40,
-  },
-
-  // ─── Content pages (landscape, image left, text right) ───
-  contentPage: {
-    flexDirection: 'row',
-    backgroundColor: BRAND.white,
-    width: '100%',
-    height: '100%',
-  },
-  imageHalf: {
-    width: HALF_WIDTH,
-    height: '100%',
-    backgroundColor: BRAND.bg,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  chapterImage: {
+  fullImage: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
@@ -145,56 +48,126 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   imagePlaceholderDot: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: BRAND.olive,
     opacity: 0.15,
   },
-  textHalf: {
-    width: HALF_WIDTH,
+
+  // ─── Cover title page ───
+  coverTitlePage: {
+    width: '100%',
     height: '100%',
-    padding: 22,
-    paddingTop: 24,
-    paddingBottom: 44,
+    backgroundColor: BRAND.bg,
     flexDirection: 'column',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 60,
     position: 'relative',
   },
-  chapterTitleInText: {
-    fontSize: 28,
-    fontFamily: 'Serif',
-    fontWeight: 'bold',
-    color: BRAND.olive,
-    marginBottom: 4,
-    lineHeight: 1.25,
+  coverBorder: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    bottom: 20,
+    borderWidth: 1.5,
+    borderColor: BRAND.olive,
+    borderRadius: 8,
+    opacity: 0.25,
   },
-  chapterSubLabel: {
+  coverDecoLine: {
+    width: 100,
+    height: 2,
+    backgroundColor: BRAND.accent,
+    marginBottom: 20,
+    opacity: 0.5,
+  },
+  coverSeries: {
     fontSize: 13,
     color: BRAND.accent,
-    letterSpacing: 2,
+    letterSpacing: 5,
+    marginBottom: 16,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  coverDivider: {
+    width: 70,
+    height: 2.5,
+    backgroundColor: BRAND.olive,
+    marginBottom: 24,
+    opacity: 0.6,
+  },
+  coverTitle: {
+    fontSize: 32,
+    fontFamily: 'Serif',
+    fontWeight: 'bold',
+    color: BRAND.ink,
+    textAlign: 'center',
+    lineHeight: 1.35,
+    marginBottom: 30,
+    paddingHorizontal: 20,
+  },
+  coverSubtitle: {
+    fontSize: 11,
+    color: BRAND.muted,
+    textAlign: 'center',
+    position: 'absolute',
+    bottom: 40,
+    left: 60,
+    right: 60,
+  },
+
+  // ─── Chapter text page ───
+  textPage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: BRAND.white,
+    paddingTop: MARGIN.top,
+    paddingBottom: MARGIN.bottom + 10,
+    paddingLeft: MARGIN.left,
+    paddingRight: MARGIN.right,
+    position: 'relative',
+  },
+  chapterSubLabel: {
+    fontSize: 10,
+    color: BRAND.accent,
+    letterSpacing: 3,
     marginBottom: 6,
     textTransform: 'uppercase',
   },
+  chapterTitle: {
+    fontSize: 22,
+    fontFamily: 'Serif',
+    fontWeight: 'bold',
+    color: BRAND.olive,
+    marginBottom: 6,
+    lineHeight: 1.3,
+  },
   chapterDecoLine: {
-    width: 40,
+    width: 50,
     height: 2,
     backgroundColor: BRAND.oliveLight,
-    marginBottom: 10,
+    marginBottom: 14,
     opacity: 0.7,
   },
+
+  // ─── Text styles ───
   paragraph: {
-    fontSize: 22,
-    lineHeight: 1.45,
+    fontSize: 12,
+    fontFamily: 'Serif',
+    lineHeight: 1.7,
     color: BRAND.ink,
-    marginBottom: 6,
+    marginBottom: 8,
     textAlign: 'justify',
   },
   dialogueText: {
-    fontSize: 22,
-    lineHeight: 1.45,
+    fontSize: 12,
+    fontFamily: 'Serif',
+    lineHeight: 1.7,
     color: '#5B6E4E',
-    marginBottom: 6,
+    marginBottom: 8,
     textAlign: 'justify',
     fontStyle: 'italic',
   },
@@ -209,54 +182,55 @@ const s = StyleSheet.create({
     color: BRAND.accent,
   },
   dropCap: {
-    fontSize: 52,
+    fontSize: 36,
     fontFamily: 'Serif',
     fontWeight: 'bold',
     color: BRAND.olive,
     lineHeight: 1,
   },
+  markdownHeader: {
+    fontSize: 15,
+    fontFamily: 'Serif',
+    fontWeight: 'bold',
+    color: BRAND.olive,
+    marginBottom: 8,
+    marginTop: 4,
+  },
 
   // ─── Footer ───
   pageFooter: {
     position: 'absolute',
-    bottom: 12,
-    right: 22,
-    fontSize: 10,
+    bottom: 20,
+    right: MARGIN.right,
+    fontSize: 9,
     color: BRAND.muted,
   },
   pageFooterLine: {
     position: 'absolute',
-    bottom: 26,
-    left: 22,
-    right: 22,
+    bottom: 34,
+    left: MARGIN.left,
+    right: MARGIN.right,
     height: 0.5,
     backgroundColor: BRAND.olive,
-    opacity: 0.15,
+    opacity: 0.12,
   },
 
-  // ─── Lexicon page (landscape full) ───
+  // ─── Lexicon page ───
   lexiconPage: {
-    flexDirection: 'row',
-    backgroundColor: BRAND.white,
     width: '100%',
     height: '100%',
-  },
-  lexiconDecoLeft: {
-    width: 60,
-    backgroundColor: BRAND.olive,
-    opacity: 0.08,
-  },
-  lexiconContent: {
-    flex: 1,
-    padding: 40,
-    paddingTop: 50,
+    backgroundColor: BRAND.white,
+    paddingTop: MARGIN.top,
+    paddingBottom: MARGIN.bottom,
+    paddingLeft: MARGIN.left,
+    paddingRight: MARGIN.right,
     position: 'relative',
   },
   lexiconHeader: {
     fontSize: 10,
     color: BRAND.olive,
     letterSpacing: 5,
-    marginBottom: 6,
+    marginBottom: 8,
     textTransform: 'uppercase',
   },
   lexiconTitle: {
@@ -265,6 +239,23 @@ const s = StyleSheet.create({
     fontWeight: 'bold',
     color: BRAND.ink,
     marginBottom: 20,
+  },
+  lexiconDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  lexiconDividerLine: {
+    flex: 1,
+    height: 0.5,
+    backgroundColor: BRAND.olive,
+    opacity: 0.3,
+  },
+  lexiconDividerDash: {
+    fontSize: 12,
+    color: BRAND.olive,
+    marginHorizontal: 10,
+    opacity: 0.4,
   },
   lexiconGrid: {
     flexDirection: 'row',
@@ -283,7 +274,7 @@ const s = StyleSheet.create({
   lexiconWord: {
     fontFamily: 'Serif',
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: 11,
     color: BRAND.olive,
   },
   lexiconLang: {
@@ -298,18 +289,18 @@ const s = StyleSheet.create({
     marginHorizontal: 6,
   },
   lexiconTranslation: {
-    fontSize: 11,
+    fontSize: 10,
     color: BRAND.ink,
     flex: 1,
   },
 });
 
-// Helper: detect if a paragraph is dialogue (starts with — or « or " or -)
+// ─── Helpers ───
+
 function isDialogue(text: string): boolean {
-  return /^[\u2014\u2013\u00ab""'\-]/.test(text.trim());
+  return /^[\u2014\u2013\u00ab\u201c\u201d'\-]/.test(text.trim());
 }
 
-// Helper: parse markdown inline formatting to PDF Text elements
 function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
   const paragraphs = text.split('\n').filter(p => p.trim());
 
@@ -317,20 +308,17 @@ function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
     const trimmed = paragraph.trim();
     if (!trimmed) return null;
 
-    // Skip markdown headers
+    // Markdown headers
     if (trimmed.startsWith('#')) {
       const headerText = trimmed.replace(/^#+\s*/, '');
       return (
-        <Text key={pIndex} style={[s.paragraph, s.boldText, { fontSize: 24, marginBottom: 10 }]}>
+        <Text key={pIndex} style={s.markdownHeader}>
           {headerText}
         </Text>
       );
     }
 
-    // Determine if this paragraph is dialogue
     const dialogue = isDialogue(trimmed);
-
-    // Parse inline bold and italic
     const parts = trimmed.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
 
     // Drop cap for first paragraph of first chapter
@@ -357,7 +345,6 @@ function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
       }
     }
 
-    // Use dialogue style for dialogue paragraphs
     const paragraphStyle = dialogue ? s.dialogueText : s.paragraph;
 
     return (
@@ -376,11 +363,12 @@ function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
   }).filter(Boolean);
 }
 
-// Chapter decorative markers (text-based, no emojis)
 const CHAPTER_MARKERS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII'];
 function getChapterMarker(index: number): string {
   return CHAPTER_MARKERS[index % CHAPTER_MARKERS.length];
 }
+
+// ─── Types ───
 
 type Chapter = {
   chapterNumber: number;
@@ -408,91 +396,86 @@ interface BookPDFProps {
   lexiconLanguage?: string;
 }
 
-export const BookPDF: React.FC<BookPDFProps> = ({ story, tomeNumber, groupImage, lexiconLanguage }) => (
+export const BookPDF: React.FC<BookPDFProps> = ({ story, groupImage, lexiconLanguage }) => (
   <Document>
-    {/* ═══ COVER PAGE (landscape) ═══ */}
-    <Page size={PAGE_SIZE} style={s.coverPage}>
-      {/* Left half: cover image */}
-      <View style={s.coverLeft}>
-        {groupImage ? (
-          <>
-            <Image src={groupImage} style={s.coverImage} />
-            <View style={s.coverImageOverlay} />
-          </>
-        ) : (
-          <View style={s.imagePlaceholder}>
-            <View style={s.imagePlaceholderDot} />
-          </View>
-        )}
-      </View>
-
-      {/* Right half: title */}
-      <View style={s.coverRight}>
-        <View style={s.coverBorderDecor} />
-        <View style={s.coverDecoLine} />
-        <Text style={s.coverSeries}>Les Gardiens de la Terre</Text>
-        <View style={s.coverDivider} />
-        <Text style={s.coverTitle}>{story.title}</Text>
-        <Text style={s.coverSubtitle}>Contes Educatifs Africains</Text>
-      </View>
+    {/* ═══ COVER — PAGE 1: Full image ═══ */}
+    <Page size="A4" style={s.imagePage}>
+      {groupImage ? (
+        <Image src={groupImage} style={s.fullImage} />
+      ) : (
+        <View style={s.imagePlaceholder}>
+          <View style={s.imagePlaceholderDot} />
+        </View>
+      )}
     </Page>
 
-    {/* ═══ CHAPTER PAGES (landscape: image left, text right) ═══ */}
+    {/* ═══ COVER — PAGE 2: Title page ═══ */}
+    <Page size="A4" style={s.coverTitlePage}>
+      <View style={s.coverBorder} />
+      <View style={s.coverDecoLine} />
+      <Text style={s.coverSeries}>Les Gardiens de la Terre</Text>
+      <View style={s.coverDivider} />
+      <Text style={s.coverTitle}>{story.title}</Text>
+      <Text style={s.coverSubtitle}>Contes Educatifs Africains</Text>
+    </Page>
+
+    {/* ═══ CHAPTERS: image page + text page(s) ═══ */}
     {story.chapters.map((chapter, index) => (
-      <Page key={index} size={PAGE_SIZE} style={s.contentPage} wrap>
-        {/* Left half: illustration */}
-        <View style={s.imageHalf}>
+      <React.Fragment key={index}>
+        {/* Image page (full bleed) */}
+        <Page size="A4" style={s.imagePage}>
           {chapter.imageUrl ? (
-            <Image src={chapter.imageUrl} style={s.chapterImage} />
+            <Image src={chapter.imageUrl} style={s.fullImage} />
           ) : (
             <View style={s.imagePlaceholder}>
               <View style={s.imagePlaceholderDot} />
             </View>
           )}
-        </View>
+        </Page>
 
-        {/* Right half: text */}
-        <View style={s.textHalf} wrap>
-          <Text style={s.chapterSubLabel}>Chapitre {getChapterMarker(index)}  —  {index + 1} / {story.chapters.length}</Text>
-          <Text style={s.chapterTitleInText}>{chapter.title}</Text>
+        {/* Text page (wraps to additional pages if needed) */}
+        <Page size="A4" style={s.textPage} wrap>
+          <Text style={s.chapterSubLabel}>
+            Chapitre {getChapterMarker(index)}  —  {index + 1} / {story.chapters.length}
+          </Text>
+          <Text style={s.chapterTitle}>{chapter.title}</Text>
           <View style={s.chapterDecoLine} />
           {renderMarkdownToPDF(chapter.content, index === 0)}
           <View style={s.pageFooterLine} fixed />
           <Text style={s.pageFooter} fixed render={({ pageNumber }) => `${pageNumber}`} />
-        </View>
-      </Page>
+        </Page>
+      </React.Fragment>
     ))}
 
-    {/* ═══ LEXICON PAGE (landscape) ═══ */}
+    {/* ═══ LEXICON PAGE ═══ */}
     {story.lexicon && story.lexicon.length > 0 && (
-      <Page size={PAGE_SIZE} style={s.lexiconPage}>
-        <View style={s.lexiconDecoLeft} />
-        <View style={s.lexiconContent}>
-          <Text style={s.lexiconHeader}>Vocabulaire</Text>
-          <Text style={s.lexiconTitle}>Lexique{lexiconLanguage ? ` — ${lexiconLanguage}` : ''}</Text>
+      <Page size="A4" style={s.lexiconPage} wrap>
+        <Text style={s.lexiconHeader}>Vocabulaire</Text>
+        <Text style={s.lexiconTitle}>
+          Lexique{lexiconLanguage ? ` — ${lexiconLanguage}` : ''}
+        </Text>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-            <View style={{ flex: 1, height: 0.5, backgroundColor: BRAND.olive, opacity: 0.3 }} />
-            <Text style={{ fontSize: 12, color: BRAND.olive, marginHorizontal: 10, opacity: 0.4 }}>—</Text>
-            <View style={{ flex: 1, height: 0.5, backgroundColor: BRAND.olive, opacity: 0.3 }} />
-          </View>
-
-          <View style={s.lexiconGrid}>
-            {story.lexicon.map((item, index) => (
-              <View key={index} style={s.lexiconItem}>
-                <Text style={s.lexiconWord}>{item.word}</Text>
-                {(item.language || lexiconLanguage) && (
-                  <Text style={s.lexiconLang}>({item.language || lexiconLanguage})</Text>
-                )}
-                <Text style={s.lexiconArrow}>→</Text>
-                <Text style={s.lexiconTranslation}>{item.translation}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={[s.pageFooterLine, { left: 0, right: 0 }]} fixed />
-          <Text style={[s.pageFooter, { right: 0 }]} fixed render={({ pageNumber }) => `${pageNumber}`} />
+        <View style={s.lexiconDivider}>
+          <View style={s.lexiconDividerLine} />
+          <Text style={s.lexiconDividerDash}>—</Text>
+          <View style={s.lexiconDividerLine} />
         </View>
+
+        <View style={s.lexiconGrid}>
+          {story.lexicon.map((item, index) => (
+            <View key={index} style={s.lexiconItem}>
+              <Text style={s.lexiconWord}>{item.word}</Text>
+              {(item.language || lexiconLanguage) && (
+                <Text style={s.lexiconLang}>({item.language || lexiconLanguage})</Text>
+              )}
+              <Text style={s.lexiconArrow}>→</Text>
+              <Text style={s.lexiconTranslation}>{item.translation}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={[s.pageFooterLine, { left: MARGIN.left, right: MARGIN.right }]} fixed />
+        <Text style={s.pageFooter} fixed render={({ pageNumber }) => `${pageNumber}`} />
       </Page>
     )}
   </Document>
