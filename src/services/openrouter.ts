@@ -118,7 +118,7 @@ CONTRAINTES DE STYLE :
 - Rédige un récit authentique, naturel et de haute qualité.
 - Intègre les traits et signatures des personnages de manière très subtile et fluide.
 - Phrases courtes, langage accessible pour la tranche d'âge ${params.ageRange}.${lexiconInstruction}
-- Longueur : environ 300 à 400 mots par séquence.
+- Longueur : Chaque séquence doit être LONGUE et DÉTAILLÉE, environ 500 à 700 mots par séquence minimum, avec des descriptions riches, des dialogues, et des détails sensoriels. C'est un vrai livre pour enfants.
 
 RÉPONDS UNIQUEMENT EN JSON STRICT avec cette structure exacte :
 {

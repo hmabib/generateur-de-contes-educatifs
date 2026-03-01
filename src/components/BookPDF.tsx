@@ -1,241 +1,305 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 
-const styles = StyleSheet.create({
-  page: {
-    flexDirection: 'column',
-    backgroundColor: '#FFFFFF',
-    padding: 60,
-    paddingTop: 70,
-    paddingBottom: 70,
-    fontFamily: 'Helvetica',
-  },
+// Register custom fonts for a children's book feel
+Font.register({
+  family: 'Serif',
+  fonts: [
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-400-normal.ttf', fontWeight: 'normal' },
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700-normal.ttf', fontWeight: 'bold' },
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-400-italic.ttf', fontStyle: 'italic' },
+  ],
+});
+
+const BRAND = {
+  olive: '#E07A5F',
+  oliveLight: '#F4A261',
+  ink: '#2B2D42',
+  accent: '#81B29A',
+  bg: '#F8F6F1',
+  bgWarm: '#FCF8F2',
+  white: '#FFFFFF',
+  muted: '#8E9299',
+};
+
+const PAGE_SIZE = [842, 595]; // A4 landscape (width x height in points)
+const HALF_WIDTH = 421;
+
+const s = StyleSheet.create({
+  // ─── Cover ───
   coverPage: {
-    flexDirection: 'column',
-    backgroundColor: '#F8F6F1',
-    padding: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontFamily: 'Helvetica',
+    flexDirection: 'row',
+    backgroundColor: BRAND.bg,
+    width: '100%',
+    height: '100%',
   },
-  coverBorder: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    right: 20,
-    bottom: 20,
-    borderWidth: 2,
-    borderColor: '#E07A5F',
-    borderRadius: 8,
-  },
-  coverInnerBorder: {
-    position: 'absolute',
-    top: 25,
-    left: 25,
-    right: 25,
-    bottom: 25,
-    borderWidth: 0.5,
-    borderColor: '#81B29A',
-    borderRadius: 6,
-  },
-  seriesTitle: {
-    fontSize: 16,
-    color: '#81B29A',
-    marginBottom: 4,
-    textAlign: 'center',
-    letterSpacing: 3,
-  },
-  tomeLabel: {
-    fontSize: 14,
-    color: '#E07A5F',
-    marginBottom: 16,
-    textAlign: 'center',
-    letterSpacing: 2,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: 'Helvetica-Bold',
-    color: '#2B2D42',
-    marginBottom: 30,
-    textAlign: 'center',
-    lineHeight: 1.3,
+  coverLeft: {
+    width: HALF_WIDTH,
+    height: '100%',
+    backgroundColor: BRAND.ink,
+    overflow: 'hidden',
+    position: 'relative',
   },
   coverImage: {
-    width: '85%',
-    maxHeight: 350,
-    objectFit: 'contain',
-    borderRadius: 8,
-    marginBottom: 20,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
   },
-  coverFooter: {
+  coverImageOverlay: {
     position: 'absolute',
-    bottom: 50,
+    bottom: 0,
     left: 0,
     right: 0,
-    textAlign: 'center',
-    fontSize: 10,
-    color: '#8E9299',
+    height: 80,
+    backgroundColor: BRAND.ink,
+    opacity: 0.4,
   },
-  // Chapter title page
-  chapterTitlePage: {
+  coverRight: {
+    width: HALF_WIDTH,
+    height: '100%',
     flexDirection: 'column',
-    backgroundColor: '#FFFFFF',
-    padding: 60,
-    alignItems: 'center',
     justifyContent: 'center',
-    fontFamily: 'Helvetica',
-  },
-  chapterNumberCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#E07A5F',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
+    padding: 40,
+    backgroundColor: BRAND.bg,
+    position: 'relative',
   },
-  chapterNumberText: {
-    fontSize: 22,
-    fontFamily: 'Helvetica-Bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
+  coverBorderDecor: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    right: 16,
+    bottom: 16,
+    borderWidth: 1.5,
+    borderColor: BRAND.olive,
+    borderRadius: 6,
+    opacity: 0.3,
   },
-  chapterSequenceLabel: {
-    fontSize: 10,
-    color: '#E07A5F',
+  coverSeries: {
+    fontSize: 11,
+    color: BRAND.accent,
     letterSpacing: 4,
     marginBottom: 8,
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
-  chapterTitle: {
-    fontSize: 24,
-    fontFamily: 'Helvetica-Bold',
-    color: '#2B2D42',
+  coverTome: {
+    fontSize: 11,
+    color: BRAND.olive,
+    letterSpacing: 3,
+    marginBottom: 20,
     textAlign: 'center',
-    marginBottom: 30,
+  },
+  coverTitle: {
+    fontSize: 28,
+    fontFamily: 'Serif',
+    fontWeight: 'bold',
+    color: BRAND.ink,
+    textAlign: 'center',
+    lineHeight: 1.4,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  coverDivider: {
+    width: 60,
+    height: 2,
+    backgroundColor: BRAND.olive,
+    marginBottom: 20,
+    opacity: 0.6,
+  },
+  coverSubtitle: {
+    fontSize: 10,
+    color: BRAND.muted,
+    textAlign: 'center',
+    marginTop: 'auto',
+    position: 'absolute',
+    bottom: 30,
+    left: 40,
+    right: 40,
+  },
+
+  // ─── Content pages (landscape, image left, text right) ───
+  contentPage: {
+    flexDirection: 'row',
+    backgroundColor: BRAND.white,
+    width: '100%',
+    height: '100%',
+  },
+  imageHalf: {
+    width: HALF_WIDTH,
+    height: '100%',
+    backgroundColor: BRAND.bg,
+    overflow: 'hidden',
+    position: 'relative',
   },
   chapterImage: {
     width: '100%',
-    maxHeight: 280,
-    objectFit: 'contain',
-    borderRadius: 8,
-    marginBottom: 24,
+    height: '100%',
+    objectFit: 'cover',
   },
-  textContainer: {
-    backgroundColor: '#FCF8F2',
-    padding: 24,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: 'rgba(224, 122, 95, 0.2)',
-    marginBottom: 20,
+  imagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: BRAND.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imagePlaceholderDot: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: BRAND.olive,
+    opacity: 0.15,
+  },
+  textHalf: {
+    width: HALF_WIDTH,
+    height: '100%',
+    padding: 36,
+    paddingTop: 40,
+    paddingBottom: 50,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    position: 'relative',
+  },
+  chapterTitleInText: {
+    fontSize: 20,
+    fontFamily: 'Serif',
+    fontWeight: 'bold',
+    color: BRAND.olive,
+    marginBottom: 12,
+    lineHeight: 1.3,
+  },
+  chapterDecoLine: {
+    width: 40,
+    height: 2,
+    backgroundColor: BRAND.oliveLight,
+    marginBottom: 16,
+    opacity: 0.7,
   },
   paragraph: {
-    fontSize: 13,
-    lineHeight: 1.7,
-    color: '#2B2D42',
-    marginBottom: 12,
+    fontSize: 11,
+    lineHeight: 1.75,
+    color: BRAND.ink,
+    marginBottom: 8,
     textAlign: 'justify',
   },
   boldText: {
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Serif',
+    fontWeight: 'bold',
   },
   italicText: {
-    fontFamily: 'Helvetica-Oblique',
+    fontFamily: 'Serif',
+    fontStyle: 'italic',
   },
-  // Decorative separator
-  separator: {
+  dropCap: {
+    fontSize: 32,
+    fontFamily: 'Serif',
+    fontWeight: 'bold',
+    color: BRAND.olive,
+    lineHeight: 1,
+  },
+
+  // ─── Footer ───
+  pageFooter: {
+    position: 'absolute',
+    bottom: 16,
+    right: 36,
+    fontSize: 9,
+    color: BRAND.muted,
+  },
+  pageFooterLine: {
+    position: 'absolute',
+    bottom: 30,
+    left: 36,
+    right: 36,
+    height: 0.5,
+    backgroundColor: BRAND.olive,
+    opacity: 0.15,
+  },
+
+  // ─── Lexicon page (landscape full) ───
+  lexiconPage: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 20,
+    backgroundColor: BRAND.white,
+    width: '100%',
+    height: '100%',
   },
-  separatorLine: {
-    height: 0.5,
-    backgroundColor: '#E07A5F',
+  lexiconDecoLeft: {
+    width: 60,
+    backgroundColor: BRAND.olive,
+    opacity: 0.08,
+  },
+  lexiconContent: {
     flex: 1,
-    opacity: 0.3,
+    padding: 40,
+    paddingTop: 50,
+    position: 'relative',
   },
-  separatorDot: {
-    fontSize: 16,
-    color: '#E07A5F',
-    marginHorizontal: 10,
-    opacity: 0.4,
-  },
-  // Footer
-  footerLine: {
-    position: 'absolute',
-    bottom: 50,
-    left: 60,
-    right: 60,
-    height: 0.5,
-    backgroundColor: '#E07A5F',
-    opacity: 0.2,
-  },
-  pageNumber: {
-    position: 'absolute',
-    fontSize: 10,
-    bottom: 35,
-    left: 0,
-    right: 0,
-    textAlign: 'center',
-    color: '#8E9299',
-  },
-  // Lexicon
   lexiconHeader: {
     fontSize: 10,
-    color: '#E07A5F',
-    letterSpacing: 4,
-    marginBottom: 8,
-    textAlign: 'center',
+    color: BRAND.olive,
+    letterSpacing: 5,
+    marginBottom: 6,
+    textTransform: 'uppercase',
   },
   lexiconTitle: {
-    fontSize: 24,
-    fontFamily: 'Helvetica-Bold',
-    color: '#2B2D42',
-    marginBottom: 24,
-    textAlign: 'center',
+    fontSize: 22,
+    fontFamily: 'Serif',
+    fontWeight: 'bold',
+    color: BRAND.ink,
+    marginBottom: 20,
   },
   lexiconGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
   },
   lexiconItem: {
     width: '48%',
     flexDirection: 'row',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 10,
     paddingBottom: 8,
     borderBottomWidth: 0.5,
     borderBottomColor: '#E8E8E8',
+    marginRight: '2%',
   },
   lexiconWord: {
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Serif',
+    fontWeight: 'bold',
     fontSize: 12,
-    color: '#E07A5F',
-    width: '45%',
+    color: BRAND.olive,
+  },
+  lexiconLang: {
+    fontSize: 8,
+    color: BRAND.accent,
+    marginLeft: 4,
+    fontStyle: 'italic',
   },
   lexiconArrow: {
     fontSize: 10,
-    color: '#8E9299',
-    marginHorizontal: 4,
+    color: BRAND.muted,
+    marginHorizontal: 6,
   },
   lexiconTranslation: {
-    fontSize: 12,
-    color: '#2B2D42',
-    width: '45%',
+    fontSize: 11,
+    color: BRAND.ink,
+    flex: 1,
   },
 });
 
 // Helper: parse markdown inline formatting to PDF Text elements
-function renderMarkdownToPDF(text: string) {
-  return text.split('\n').map((paragraph, pIndex) => {
+function renderMarkdownToPDF(text: string, isFirstChapter: boolean = false) {
+  const paragraphs = text.split('\n').filter(p => p.trim());
+
+  return paragraphs.map((paragraph, pIndex) => {
     const trimmed = paragraph.trim();
     if (!trimmed) return null;
-    // Skip markdown headers (##, ###)
+
+    // Skip markdown headers
     if (trimmed.startsWith('#')) {
       const headerText = trimmed.replace(/^#+\s*/, '');
       return (
-        <Text key={pIndex} style={[styles.paragraph, styles.boldText, { fontSize: 15, marginBottom: 16 }]}>
+        <Text key={pIndex} style={[s.paragraph, s.boldText, { fontSize: 13, marginBottom: 12 }]}>
           {headerText}
         </Text>
       );
@@ -243,14 +307,39 @@ function renderMarkdownToPDF(text: string) {
 
     // Parse inline bold and italic
     const parts = trimmed.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+
+    // Drop cap for first paragraph of first chapter
+    if (isFirstChapter && pIndex === 0 && parts.length > 0) {
+      const firstPart = typeof parts[0] === 'string' ? parts[0] : '';
+      if (firstPart.length > 1) {
+        const firstLetter = firstPart[0];
+        const rest = firstPart.slice(1);
+        return (
+          <Text key={pIndex} style={s.paragraph}>
+            <Text style={s.dropCap}>{firstLetter}</Text>
+            {rest}
+            {parts.slice(1).map((part, i) => {
+              if (part.startsWith('**') && part.endsWith('**')) {
+                return <Text key={i} style={s.boldText}>{part.slice(2, -2)}</Text>;
+              }
+              if (part.startsWith('*') && part.endsWith('*')) {
+                return <Text key={i} style={s.italicText}>{part.slice(1, -1)}</Text>;
+              }
+              return part;
+            })}
+          </Text>
+        );
+      }
+    }
+
     return (
-      <Text key={pIndex} style={styles.paragraph}>
+      <Text key={pIndex} style={s.paragraph}>
         {parts.map((part, i) => {
           if (part.startsWith('**') && part.endsWith('**')) {
-            return <Text key={i} style={styles.boldText}>{part.slice(2, -2)}</Text>;
+            return <Text key={i} style={s.boldText}>{part.slice(2, -2)}</Text>;
           }
           if (part.startsWith('*') && part.endsWith('*')) {
-            return <Text key={i} style={styles.italicText}>{part.slice(1, -1)}</Text>;
+            return <Text key={i} style={s.italicText}>{part.slice(1, -1)}</Text>;
           }
           return part;
         })}
@@ -266,86 +355,111 @@ type Chapter = {
   imageUrl?: string;
 };
 
+type LexiconEntry = {
+  word: string;
+  translation: string;
+  language?: string;
+};
+
 type StoryData = {
   title: string;
   chapters: Chapter[];
-  lexicon: { word: string; translation: string }[];
+  lexicon: LexiconEntry[];
 };
 
 interface BookPDFProps {
   story: StoryData;
   tomeNumber: string;
   groupImage: string | null;
+  lexiconLanguage?: string;
 }
 
-export const BookPDF: React.FC<BookPDFProps> = ({ story, tomeNumber, groupImage }) => (
+export const BookPDF: React.FC<BookPDFProps> = ({ story, tomeNumber, groupImage, lexiconLanguage }) => (
   <Document>
-    {/* Cover Page */}
-    <Page size="A4" style={styles.coverPage}>
-      <View style={styles.coverBorder} />
-      <View style={styles.coverInnerBorder} />
-      <Text style={styles.seriesTitle}>LES GARDIENS DE LA TERRE</Text>
-      <Text style={styles.tomeLabel}>TOME {tomeNumber}</Text>
-      <Text style={styles.title}>{story.title}</Text>
-      {groupImage && <Image src={groupImage} style={styles.coverImage} />}
-      <Text style={styles.coverFooter}>Contes Éducatifs Africains</Text>
+    {/* ═══ COVER PAGE (landscape) ═══ */}
+    <Page size={PAGE_SIZE} style={s.coverPage}>
+      {/* Left half: cover image */}
+      <View style={s.coverLeft}>
+        {groupImage ? (
+          <>
+            <Image src={groupImage} style={s.coverImage} />
+            <View style={s.coverImageOverlay} />
+          </>
+        ) : (
+          <View style={s.imagePlaceholder}>
+            <View style={s.imagePlaceholderDot} />
+          </View>
+        )}
+      </View>
+
+      {/* Right half: title */}
+      <View style={s.coverRight}>
+        <View style={s.coverBorderDecor} />
+        <Text style={s.coverSeries}>Les Gardiens de la Terre</Text>
+        {tomeNumber && (
+          <Text style={s.coverTome}>Tome {tomeNumber}</Text>
+        )}
+        <View style={s.coverDivider} />
+        <Text style={s.coverTitle}>{story.title}</Text>
+        <Text style={s.coverSubtitle}>Contes Éducatifs Africains</Text>
+      </View>
     </Page>
 
-    {/* Chapters */}
+    {/* ═══ CHAPTER PAGES (landscape: image left, text right) ═══ */}
     {story.chapters.map((chapter, index) => (
-      <React.Fragment key={index}>
-        {/* Chapter content page */}
-        <Page size="A4" style={styles.page}>
-          {/* Chapter header */}
-          <View style={{ alignItems: 'center', marginBottom: 24 }}>
-            <View style={styles.chapterNumberCircle}>
-              <Text style={styles.chapterNumberText}>{chapter.chapterNumber}</Text>
+      <Page key={index} size={PAGE_SIZE} style={s.contentPage} wrap>
+        {/* Left half: illustration */}
+        <View style={s.imageHalf}>
+          {chapter.imageUrl ? (
+            <Image src={chapter.imageUrl} style={s.chapterImage} />
+          ) : (
+            <View style={s.imagePlaceholder}>
+              <View style={s.imagePlaceholderDot} />
             </View>
-            <Text style={styles.chapterSequenceLabel}>SÉQUENCE {chapter.chapterNumber}</Text>
-            <Text style={styles.chapterTitle}>{chapter.title}</Text>
-          </View>
+          )}
+        </View>
 
-          {chapter.imageUrl && <Image src={chapter.imageUrl} style={styles.chapterImage} />}
-
-          <View style={styles.textContainer}>
-            {renderMarkdownToPDF(chapter.content)}
-          </View>
-
-          {/* Footer line */}
-          <View style={styles.footerLine} fixed />
-          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-            `${pageNumber} / ${totalPages}`
-          )} fixed />
-        </Page>
-      </React.Fragment>
+        {/* Right half: text */}
+        <View style={s.textHalf} wrap>
+          <Text style={s.chapterTitleInText}>{chapter.title}</Text>
+          <View style={s.chapterDecoLine} />
+          {renderMarkdownToPDF(chapter.content, index === 0)}
+          <View style={s.pageFooterLine} fixed />
+          <Text style={s.pageFooter} fixed render={({ pageNumber }) => `${pageNumber}`} />
+        </View>
+      </Page>
     ))}
 
-    {/* Lexicon Page */}
+    {/* ═══ LEXICON PAGE (landscape) ═══ */}
     {story.lexicon && story.lexicon.length > 0 && (
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.lexiconHeader}>VOCABULAIRE</Text>
-        <Text style={styles.lexiconTitle}>Lexique</Text>
+      <Page size={PAGE_SIZE} style={s.lexiconPage}>
+        <View style={s.lexiconDecoLeft} />
+        <View style={s.lexiconContent}>
+          <Text style={s.lexiconHeader}>Vocabulaire</Text>
+          <Text style={s.lexiconTitle}>Lexique{lexiconLanguage ? ` — ${lexiconLanguage}` : ''}</Text>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-          <View style={{ flex: 1, height: 0.5, backgroundColor: '#E07A5F', opacity: 0.3 }} />
-          <Text style={{ fontSize: 12, color: '#E07A5F', marginHorizontal: 10, opacity: 0.5 }}>✦</Text>
-          <View style={{ flex: 1, height: 0.5, backgroundColor: '#E07A5F', opacity: 0.3 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flex: 1, height: 0.5, backgroundColor: BRAND.olive, opacity: 0.3 }} />
+            <Text style={{ fontSize: 12, color: BRAND.olive, marginHorizontal: 10, opacity: 0.4 }}>✦</Text>
+            <View style={{ flex: 1, height: 0.5, backgroundColor: BRAND.olive, opacity: 0.3 }} />
+          </View>
+
+          <View style={s.lexiconGrid}>
+            {story.lexicon.map((item, index) => (
+              <View key={index} style={s.lexiconItem}>
+                <Text style={s.lexiconWord}>{item.word}</Text>
+                {(item.language || lexiconLanguage) && (
+                  <Text style={s.lexiconLang}>({item.language || lexiconLanguage})</Text>
+                )}
+                <Text style={s.lexiconArrow}>→</Text>
+                <Text style={s.lexiconTranslation}>{item.translation}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={[s.pageFooterLine, { left: 0, right: 0 }]} fixed />
+          <Text style={[s.pageFooter, { right: 0 }]} fixed render={({ pageNumber }) => `${pageNumber}`} />
         </View>
-
-        <View style={styles.lexiconGrid}>
-          {story.lexicon.map((item, index) => (
-            <View key={index} style={styles.lexiconItem}>
-              <Text style={styles.lexiconWord}>{item.word}</Text>
-              <Text style={styles.lexiconArrow}>→</Text>
-              <Text style={styles.lexiconTranslation}>{item.translation}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.footerLine} fixed />
-        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-          `${pageNumber} / ${totalPages}`
-        )} fixed />
       </Page>
     )}
   </Document>

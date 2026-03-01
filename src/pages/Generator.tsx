@@ -23,7 +23,7 @@ type Chapter = {
 type StoryData = {
   title: string;
   chapters: Chapter[];
-  lexicon: { word: string; translation: string }[];
+  lexicon: { word: string; translation: string; language?: string }[];
 };
 
 const PROGRESS_MESSAGES = [
@@ -313,6 +313,7 @@ export function Generator() {
       imageUrl: groupImage || generatedImage,
       date: new Date().toISOString(),
       isStructured: true,
+      lexiconLanguage: formData.lexiconLanguage || undefined,
     });
     localStorage.setItem('gardiens_stories', JSON.stringify(savedStories));
     alert('Tome sauvegardé dans la bibliothèque !');
@@ -682,6 +683,9 @@ export function Generator() {
                           <option value="3">3 séquences</option>
                           <option value="5">5 séquences</option>
                           <option value="7">7 séquences</option>
+                          <option value="9">9 séquences</option>
+                          <option value="11">11 séquences</option>
+                          <option value="13">13 séquences</option>
                         </select>
                       </div>
                       <div>
@@ -801,7 +805,7 @@ export function Generator() {
                 </h2>
                 <div className="flex gap-2 flex-wrap justify-end">
                   <PDFDownloadLink
-                    document={<BookPDF story={story} tomeNumber={formData.tomeNumber} groupImage={groupImage} />}
+                    document={<BookPDF story={story} tomeNumber={formData.tomeNumber} groupImage={groupImage} lexiconLanguage={formData.lexiconLanguage || undefined} />}
                     fileName={`Les_Gardiens_Tome_${formData.tomeNumber}.pdf`}
                     className="flex items-center gap-2 bg-brand-bg text-brand-olive px-4 py-2 rounded-full font-medium hover:bg-brand-olive/10 transition-colors border border-brand-olive/20 text-sm"
                   >
@@ -923,6 +927,7 @@ export function Generator() {
                 tomeNumber={formData.tomeNumber}
                 editable={true}
                 onStoryChange={handleStoryChange}
+                lexiconLanguage={formData.lexiconLanguage || undefined}
               />
 
             </motion.div>

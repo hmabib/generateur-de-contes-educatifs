@@ -13,6 +13,7 @@ interface Story {
   imageUrl?: string;
   date: string;
   isStructured?: boolean;
+  lexiconLanguage?: string;
 }
 
 type StoryData = {
@@ -24,7 +25,7 @@ type StoryData = {
     imagePrompt: string;
     imageUrl?: string;
   }[];
-  lexicon: { word: string; translation: string }[];
+  lexicon: { word: string; translation: string; language?: string }[];
 };
 
 export function Library() {
@@ -209,7 +210,7 @@ export function Library() {
                 </div>
                 {selectedStory.isStructured && (
                   <PDFDownloadLink
-                    document={<BookPDF story={JSON.parse(selectedStory.content)} tomeNumber={selectedStory.tomeNumber} groupImage={selectedStory.imageUrl || null} />}
+                    document={<BookPDF story={JSON.parse(selectedStory.content)} tomeNumber={selectedStory.tomeNumber} groupImage={selectedStory.imageUrl || null} lexiconLanguage={selectedStory.lexiconLanguage} />}
                     fileName={`Les_Gardiens_Tome_${selectedStory.tomeNumber}.pdf`}
                     className="flex items-center gap-2 bg-white text-brand-olive px-4 py-2 rounded-full font-medium hover:bg-brand-olive/10 transition-colors border border-brand-olive/20"
                   >
@@ -239,6 +240,7 @@ export function Library() {
                           story={data}
                           tomeNumber={selectedStory.tomeNumber}
                           editable={false}
+                          lexiconLanguage={selectedStory.lexiconLanguage}
                         />
                       </div>
                     );

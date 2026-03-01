@@ -14,7 +14,7 @@ type Chapter = {
 type StoryData = {
   title: string;
   chapters: Chapter[];
-  lexicon: { word: string; translation: string }[];
+  lexicon: { word: string; translation: string; language?: string }[];
 };
 
 interface StoryReaderProps {
@@ -22,9 +22,10 @@ interface StoryReaderProps {
   tomeNumber: string;
   editable?: boolean;
   onStoryChange?: (story: StoryData) => void;
+  lexiconLanguage?: string;
 }
 
-export function StoryReader({ story, tomeNumber, editable = false, onStoryChange }: StoryReaderProps) {
+export function StoryReader({ story, tomeNumber, editable = false, onStoryChange, lexiconLanguage }: StoryReaderProps) {
   const [editingChapterIndex, setEditingChapterIndex] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingChapterTitle, setEditingChapterTitle] = useState<number | null>(null);
@@ -53,7 +54,7 @@ export function StoryReader({ story, tomeNumber, editable = false, onStoryChange
 
   const handleAddLexicon = () => {
     if (!newLexiconWord || !newLexiconTranslation) return;
-    const updatedLexicon = [...(story.lexicon || []), { word: newLexiconWord, translation: newLexiconTranslation }];
+    const updatedLexicon = [...(story.lexicon || []), { word: newLexiconWord, translation: newLexiconTranslation, language: lexiconLanguage || '' }];
     updateStory({ ...story, lexicon: updatedLexicon });
     setNewLexiconWord('');
     setNewLexiconTranslation('');
@@ -79,15 +80,12 @@ export function StoryReader({ story, tomeNumber, editable = false, onStoryChange
               </div>
             )}
 
-            {/* Chapter header */}
+            {/* Chapter header — no "Séquence" label, just title */}
             <div className="flex items-center gap-4 mb-8">
               <div className="w-12 h-12 bg-brand-olive/10 rounded-full flex items-center justify-center text-brand-olive font-serif font-bold text-lg shrink-0">
                 {chapter.chapterNumber}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-[0.2em] text-brand-olive-light font-bold mb-1">
-                  Séquence {chapter.chapterNumber}
-                </p>
                 {editable && editingChapterTitle === index ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -116,7 +114,7 @@ export function StoryReader({ story, tomeNumber, editable = false, onStoryChange
             {chapter.imageUrl && (
               <img
                 src={chapter.imageUrl}
-                alt={`Illustration Séquence ${chapter.chapterNumber}`}
+                alt={chapter.title}
                 className="w-full h-auto rounded-2xl shadow-md border border-brand-olive/20 mb-8"
               />
             )}
@@ -167,7 +165,9 @@ export function StoryReader({ story, tomeNumber, editable = false, onStoryChange
         <div className="mt-16 pt-8 border-t border-brand-olive/10">
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px bg-brand-olive/20 flex-1" />
-            <h3 className="text-2xl font-serif font-bold text-brand-olive px-4">Lexique</h3>
+            <h3 className="text-2xl font-serif font-bold text-brand-olive px-4">
+              Lexique{lexiconLanguage ? ` — ${lexiconLanguage}` : ''}
+            </h3>
             <div className="h-px bg-brand-olive/20 flex-1" />
           </div>
 
@@ -176,7 +176,10 @@ export function StoryReader({ story, tomeNumber, editable = false, onStoryChange
               <div key={index} className="bg-gradient-to-br from-brand-bg to-white p-5 rounded-2xl border border-brand-olive/10 shadow-sm flex items-center gap-3 group">
                 <div className="flex-1">
                   <span className="text-lg font-serif font-bold text-brand-olive">{item.word}</span>
-                  <span className="text-brand-ink/40 mx-3 text-sm italic">signifie</span>
+                  {(item.language || lexiconLanguage) && (
+                    <span className="text-xs text-brand-accent ml-2 italic">({item.language || lexiconLanguage})</span>
+                  )}
+                  <span className="text-brand-ink/40 mx-3 text-sm italic">→</span>
                   <span className="text-brand-ink font-medium">{item.translation}</span>
                 </div>
                 {editable && (
