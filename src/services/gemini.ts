@@ -3,12 +3,15 @@ import { getProviderConfig } from "./ai-provider";
 
 function getAiInstance() {
   const config = getProviderConfig();
-  const apiKey = config?.apiKey || '';
+  const apiKey = config?.apiKey;
+  if (!apiKey) {
+    throw new Error("Clé API Gemini non configurée. Cliquez sur l'icône de configuration dans le menu pour ajouter votre clé.");
+  }
   return new GoogleGenAI({ apiKey });
 }
 
 // Modèles Gemini
-const TEXT_MODEL = "gemini-2.5-flash-preview-05-20";
+const TEXT_MODEL = "gemini-3.1-pro-preview";
 const IMAGE_MODEL = "gemini-3.1-flash-image-preview";
 
 export async function generateStructuredStory(params: {

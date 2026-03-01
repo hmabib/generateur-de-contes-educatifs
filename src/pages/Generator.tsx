@@ -164,9 +164,10 @@ export function Generator() {
         const storyResult = await generateStructuredStory(storyParams);
         setStory(storyResult);
       }
-    } catch (error) {
-      console.error(error);
-      alert("Une erreur s'est produite lors de la génération. Vérifiez votre clé API et réessayez.");
+    } catch (error: any) {
+      console.error('Erreur génération:', error);
+      const detail = error?.message || error?.toString() || 'Erreur inconnue';
+      alert(`Erreur lors de la génération :\n\n${detail}\n\nVérifiez votre clé API et réessayez.`);
     } finally {
       clearInterval(progressInterval);
       setProgressMessage('');
